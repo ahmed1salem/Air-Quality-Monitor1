@@ -57,6 +57,20 @@
         .sidebar-open #sidebar { transform: translateX(0); }
         .sidebar-open #sidebar-overlay { opacity: 1; pointer-events: auto; }
 
+        /* RTL Overrides for Sidebar */
+        html[dir="rtl"] #sidebar {
+            left: auto;
+            right: 0;
+            transform: translateX(100%);
+        }
+        html[dir="rtl"] .sidebar-open #sidebar {
+            transform: translateX(0);
+        }
+        html[dir="rtl"] #close-sidebar-btn {
+            right: auto;
+            left: 1rem;
+        }
+
         /* --- Dark Mode Styles --- */
         .dark body { background-color: #0f172a; color: #e2e8f0; }
         .dark .bg-white { background-color: #1e293b; }
