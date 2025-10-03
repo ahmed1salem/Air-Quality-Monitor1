@@ -10,7 +10,7 @@
                    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com https://www.gstatic.com https://cdn.jsdelivr.net; 
                    style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; 
                    font-src 'self' https://fonts.gstatic.com; 
-                   img-src 'self' https: data: blob: https://raw.githubusercontent.com https://placehold.co https://i.ibb.co;
+                   img-src 'self' https: data: blob: https://raw.githubusercontent.com https://placehold.co https://i.ibb.co https://images.unsplash.com;
                    connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://fcmtoken.googleapis.com https://api.waqi.info https://api.openweathermap.org https://api.openaq.org https://gibs.earthdata.nasa.gov https://www.google-analytics.com https://firebaseinstallations.googleapis.com;">
 
     <title>Air Quality Monitor - Live AQI & Pollution Map by Digital Minds</title>
@@ -26,75 +26,299 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Cairo:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&family=Cairo:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <style>
-        :root { --font-primary: 'Inter', sans-serif; --font-secondary: 'Cairo', sans-serif; }
+        /* --- Base Styles (Dark Mode by Default) --- */
+        :root { 
+            --font-primary: 'Exo 2', sans-serif; 
+            --font-secondary: 'Cairo', sans-serif;
+            --color-bg: #0a0f1f;
+            --color-bg-panel: rgba(17, 24, 39, 0.8);
+            --color-text: #e5e7eb;
+            --color-text-muted: #9ca3af;
+            --color-accent: #4f46e5;
+            --color-accent-glow: rgba(79, 70, 229, 0.5);
+            --border-color: rgba(79, 70, 229, 0.2);
+        }
         html { scroll-behavior: smooth; }
-        body { background-color: #f8fafc; color: #1f2937; scroll-behavior: smooth; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        body { 
+            background-color: var(--color-bg); 
+            color: var(--color-text); 
+            scroll-behavior: smooth; 
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
         .lang-en { font-family: var(--font-primary); }
         .lang-ar { font-family: var(--font-secondary); }
+
+        /* --- Map Styles --- */
         #map-container { height: 100vh; width: 100vw; }
         #map { height: 100%; width: 100%; z-index: 1; }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        .leaflet-tile-pane { 
+            filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(1.1); 
+        }
+        .leaflet-control-geocoder a, .leaflet-control-zoom a, #locate-btn { 
+            background-color: var(--color-bg-panel) !important;
+            color: var(--color-text) !important; 
+            border: 1px solid var(--border-color) !important;
+            backdrop-filter: blur(10px);
+        }
+        .leaflet-control-geocoder, .leaflet-control-zoom { border: none !important; }
+        .leaflet-control-geocoder-form input { 
+            background-color: rgba(30, 41, 59, 0.9) !important;
+            color: var(--color-text) !important; 
+            border: 1px solid var(--border-color) !important;
+        }
+
+        /* --- Space Theme Backgrounds --- */
+        .hero-bg {
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+        }
+        #stars1, #stars2, #stars3 {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: transparent;
+        }
+        #stars1 {
+            background-image: radial-gradient(1px 1px at 20px 30px, #eee, transparent), radial-gradient(1px 1px at 40px 70px, #fff, transparent), radial-gradient(1px 1px at 50px 160px, #ddd, transparent), radial-gradient(1px 1px at 90px 40px, #fff, transparent), radial-gradient(1px 1px at 130px 80px, #fff, transparent), radial-gradient(1px 1px at 160px 120px, #ddd, transparent);
+            background-size: 200px 200px;
+            animation: zoom 15s alternate infinite;
+        }
+        #stars2 {
+            background-image: radial-gradient(1px 1px at 20px 30px, #eee, transparent), radial-gradient(1px 1px at 40px 70px, #fff, transparent), radial-gradient(1px 1px at 50px 160px, #ddd, transparent), radial-gradient(1px 1px at 90px 40px, #fff, transparent), radial-gradient(1px 1px at 130px 80px, #fff, transparent), radial-gradient(1px 1px at 160px 120px, #ddd, transparent);
+            background-size: 300px 300px;
+            background-position: 100px 100px;
+            animation: zoom 25s alternate infinite;
+        }
+        #stars3 {
+            background-image: radial-gradient(1.5px 1.5px at 20px 30px, #eee, transparent), radial-gradient(1.5px 1.5px at 40px 70px, #fff, transparent), radial-gradient(2px 2px at 50px 160px, #ddd, transparent), radial-gradient(1px 1px at 90px 40px, #fff, transparent), radial-gradient(1.5px 1.5px at 130px 80px, #fff, transparent), radial-gradient(2px 2px at 160px 120px, #ddd, transparent);
+            background-size: 500px 500px;
+            background-position: 200px 200px;
+            animation: zoom 40s alternate infinite;
+        }
+        @keyframes zoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        #shooting-stars-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .shooting-star {
+            position: absolute;
+            left: -150px;
+            width: 150px;
+            height: 2px;
+            background: linear-gradient(to right, #fff, transparent);
+            animation-name: shoot;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+        @keyframes shoot {
+            from { transform: translateX(0); }
+            to { transform: translateX(calc(100vw + 300px)); }
+        }
+
+        /* From Uiverse.io by Lakshay-art */
+        .section-banner {
+            height: 250px;
+            width: 250px;
+            position: relative;
+            transition: left 0.3s linear;
+            background: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAAAAAAD/2wBDACYaHSEdGCYhHyErKCYtOV8+OTQ0OXVTWEVfinmRj4h5hYOYq9u6mKLPpIOFvv/Bz+Lp9fj1lLf////u/9vw9ez/2wBDASgrKzkyOXA+PnDsnYWd7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Oz/wAARCAE5AfQDASIAAhEBAxEB/8QAGgAAAwEBAQEAAAAAAAAAAAAAAgMEAQAFBv/EADoQAAIBAwIFAwIFAgUFAQADAAECEQADIRIxBCJBUWETcYEykRRCUqGxI8EFYnLR8DOCkuHxQxVTY//EABgBAQEBAQEAAAAAAAAAAAAAAAABAgME/8QAIBEBAQEAAwEBAAMBAQAAAAAAAAERAiExEkETUXEDYf/aAAwDAQACEQMRAD8A9T1Adg32rZPtWavI+9bA8VpAy3dftRDP5vtSmuDaPtXBWI5dSjyaYhx0jd/3riyD89TlXH029fzWAOufTtp96Yaf61rb1Kw3rQ/P+1KD92n2U0epTnQ3wKuAhxFo7GfisPE2huY94rAQThG9sAULBQPox4IpkDBftMJUz8Vmv/QPegV7cxoB/eiKof8A8ZpgFr4XdlHwaAcWn6x8LTQkbWVH2rpYHCn7U6AjiVPU/wDjW+uP1D5FFqJEQD70GknMADsBFAYuk7H7LXa26k/+NcGYefijWf8AgqANTxgH/wAazXc/Sf8AwpuOprGmOWKKSbrgTA/8TWes/wClaZqHWJ8Zro1dvmqhfrxuq/eu9YxISfY1rLp3VfkCsVo2Fv8AiqM9c/8A9bV3rx/+T/aiJU/UFHkNShYXJV1z3n/enSGi8D+UzRqxP5alNoz/ANa17ATWCyx+niAPmmQV6u4rdY61J6fELtdDfNDr4lTzIGHjemGrda9x962QdiKlW8mrmLp4KmqF0ESp/aKij0jxW6B0iksLUwXAPvXemoEy0eDQO0e1ZpHilBViSG+WrtNsn64PioGEe1cQImaDQnVprilsDOP+6qO1Cd5rp7A/ehLWx9Pp/LUOt5hTY+9A2T2H3rA+Y5fvS9dwQSLQ8zXfiAMMLRH+qiGF4MHT967VPQfcVO13hyZ9FSfDVnqWelhfk1cDjdUd/g0QugiQ0fNJFwDK2bcdxXeuZghR4j/1QMN8D89aL6H84oBfH6Y/7aI3kjNsfagaHU9Qfmt1Cdh96Ut2ye3/AI0X9IjlVDUUZYfoP3rNX/8Am3waGF/T+9CSqnKAe5oDNwdVYe9YbqdA1Z6w2BU0J4gLgqtMB+snUH70QvWz3+9Bbu+ocLjvpxWu4Xe1PkUB+qld6qePvSg9o/lK0RNro0e1MDPUH+X71nqp1FK1WRktq+KIC0/0zUyBnqp0/it9W33H2oBbQ400JtocTHtTIG60/UK6khE6XG+9dTBIeKukSBB7QKKzxF0nnIj2rbic35vcCsXUJ2MdDW+kVAh1lTFMXaovWB6Ed4NN9UEjH71nFVD3rPSU5k/egt3J/KBFZdukJIYKo3JzUxR+mi5E/c1zagOWKSpvMNXqrpO2JrR62row77UGM7A5kewqch9wQx7RVbFozbn2M1i20YfTHvVlTE/rNbXntftWWuKRjpKaT3BptxdLAKRnoKWbNtxGgT3HStdIpV8YIIrifJFQCwVIKOwHWMU4LciRcvDsGG9TIacbkGAwohdM5AIpDawCXtK4HWCDXWmRtgV8MaYKCysOvxQZGzVhxRCQNqhodRHU12onua6u22qprQW2j96wgjOPvXAEVsGJCE+1F1mqGkAVpdWHMs/NCCMyo+ZrdYGNGr5NBk2JyF+4oh6PRT8Ut3Trailm1auNKgr/AKRQURaO6P8A+NZpsloCtPaK62giAHI7kYpn07H9qi4XptHKhj8U1Vjv80vUQ+ogrPmuLmcKfcGgYdUYJqN7xW7pchx/mUVR6hIgjHkVLxNkMZClT52pIU1b1m6IkKR0Bx+9M3H9Ncd1ivPWxJyG+BNV8Pw628uAD071bJENlQOYE+9CSp+m18laZqVR9LHzFGus7KAP8xqauEAtP/TSPIrtJnCLnuKpz4/iu001cTi23VU+1ELafpXzijM94odQiAfim1HC2o2An/SKE236KnvprIA5rhI6RWszRI5E+5P+1Bg4ePqcjwKNURTAT5oFa3Opyy/5ZrvUDNB5VO0GnZ0J7kYEg9KwW8e9G7D2P3pYu3E/Mo98VlR76O4J2BpguOoyQPM0j8TYk5J9tq57iOMxQO/E3E+kAe9C3GXFwWj2paMSZOKMEqZI+xosP/yF/k71h45h9VqY3z/W2bM7dKUy6z/AEz81WlEcdcuEAWwCe9Tf4nc29Uj2qk2XAzXCy+Iq2mX8Vcvn05P+qmPx1zVpCAz5qM20UfUvtWgW1MldPtUWUpxV5s6QPiui/fuHKiPG1E0YGKwECigQ98fTXgEjpXZ8itk/WvtRFA2n+9coB3msA/eqH3q+mP//Z");
+            background-size: cover;
+            background-position: left;
+            bottom: 0px;
+            border-radius: 50%;
+            animation: earthRotate 30s linear 0s infinite;
+            box-shadow: 0px 0 20px RGBA(255, 255, 255, 0.2), -5px 0px 8px #c3f4ff inset,
+            15px 2px 25px #000 inset, -24px -2px 34px #c3f4ff99 inset,
+            250px 0px 44px #00000066 inset, 150px 0px 38px #000000aa inset;
+        }
+        @keyframes earthRotate {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 400px 0;
+            }
+        }
+
+        .curved-corner-star {
+            display: flex;
+            position: relative;
+        }
+
+        #curved-corner-bottomleft,
+        #curved-corner-bottomright,
+        #curved-corner-topleft,
+        #curved-corner-topright {
+            width: 4px;
+            height: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #curved-corner-bottomleft:before,
+        #curved-corner-bottomright:before,
+        #curved-corner-topleft:before,
+        #curved-corner-topright:before {
+            content: "";
+            display: block;
+            width: 200%;
+            height: 200%;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        #curved-corner-bottomleft:before {
+            bottom: 0;
+            left: 0;
+            box-shadow: -5px 5px 0 0 white;
+        }
+
+        #curved-corner-bottomright:before {
+            bottom: 0;
+            right: 0;
+            box-shadow: 5px 5px 0 0 white;
+        }
+
+        #curved-corner-topleft:before {
+            top: 0;
+            left: 0;
+            box-shadow: -5px -5px 0 0 white;
+        }
+
+        #curved-corner-topright:before {
+            top: 0;
+            right: 0;
+            box-shadow: 5px -5px 0 0 white;
+        }
+
+        @keyframes twinkling {
+            0%,
+            100% {
+                opacity: 0.1;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        #star-1 {
+            position: absolute;
+            left: -20px;
+            animation: twinkling 3s infinite;
+        }
+
+        #star-2 {
+            position: absolute;
+            left: -40px;
+            top: 30px;
+            animation: twinkling 2s infinite;
+        }
+        #star-3 {
+            position: absolute;
+            left: 350px;
+            top: 90px;
+            animation: twinkling 4s infinite;
+        }
+        #star-4 {
+            position: absolute;
+            left: 200px;
+            top: 290px;
+            animation: twinkling 3s infinite;
+        }
+        #star-5 {
+            position: absolute;
+            left: 50px;
+            top: 270px;
+            animation: twinkling 1.5s infinite;
+        }
+
+        #star-6 {
+            position: absolute;
+            left: 250px;
+            top: -50px;
+            animation: twinkling 4s infinite;
+        }
+        #star-7 {
+            position: absolute;
+            left: 290px;
+            top: 60px;
+            animation: twinkling 2s infinite;
+        }
+        /* --- End of Uiverse.io snippet --- */
+
+        /* --- Components & UI Elements --- */
+        .glass-panel {
+            background-color: var(--color-bg-panel);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .glow-button {
+            background-color: var(--color-accent);
+            box-shadow: 0 0 15px var(--color-accent-glow), 0 0 25px var(--color-accent-glow);
+            transition: all 0.3s ease;
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 25px var(--color-accent-glow), 0 0 40px var(--color-accent-glow);
+            transform: scale(1.05);
+        }
+        .modal-input {
+            background-color: rgba(10, 15, 31, 0.7);
+            border: 1px solid var(--border-color);
+            color: var(--color-text);
+        }
+        .modal-input:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 10px var(--color-accent-glow);
+            outline: none;
+        }
+        
+        /* --- Loader --- */
+        .loader { 
+            border: 5px solid rgba(79, 70, 229, 0.2); 
+            border-top: 5px solid var(--color-accent); 
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hero-bg { background-color: #111827; background-image: radial-gradient(circle at 1px 1px, #4b5563 1px, transparent 0); background-size: 25px 25px; }
-        .leaflet-control-geocoder-form input { font-family: var(--font-primary); }
-        html[lang="ar"] .leaflet-control-geocoder-form input { font-family: var(--font-secondary); }
-        #history-list li { cursor: pointer; transition: background-color: 0.2s; }
-        #history-list li:hover { background-color: #f3f4f6; }
-        
-        .leaflet-control-container .leaflet-top { top: 80px; }
-        @media (max-width: 640px) { .leaflet-control-container .leaflet-top { top: 90px; } }
-        
+
         /* --- Sidebar Styles --- */
         #sidebar { transition: transform 0.3s ease-in-out; }
         #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
         .sidebar-open #sidebar { transform: translateX(0); }
         .sidebar-open #sidebar-overlay { opacity: 1; pointer-events: auto; }
 
-        /* RTL Overrides for Sidebar */
-        html[dir="rtl"] #sidebar {
-            left: auto;
-            right: 0;
-            transform: translateX(100%);
-        }
-        html[dir="rtl"] .sidebar-open #sidebar {
-            transform: translateX(0);
-        }
-        html[dir="rtl"] #close-sidebar-btn {
-            right: auto;
-            left: 1rem;
-        }
+        html[dir="rtl"] #sidebar { left: auto; right: 0; transform: translateX(100%); }
+        html[dir="rtl"] .sidebar-open #sidebar { transform: translateX(0); }
+        html[dir="rtl"] #close-sidebar-btn { right: auto; left: 1rem; }
 
-        /* --- Dark Mode Styles --- */
-        .dark body { background-color: #0f172a; color: #e2e8f0; }
-        .dark .bg-white { background-color: #1e293b; }
-        .dark .bg-gray-50 { background-color: #0f172a; }
-        .dark .text-gray-800 { color: #ffffff; }
-        .dark .text-gray-900 { color: #ffffff; }
-        .dark .text-gray-600 { color: #94a3b8; }
-        .dark .text-gray-700 { color: #cbd5e1; }
-        .dark .text-gray-500 { color: #64748b; }
-        .dark .border, .dark .border-b, .dark .border-t { border-color: #334155; }
-        .dark .shadow-xl, .dark .shadow-lg, .dark .shadow-md { box-shadow: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.4); }
-        .dark .hero-bg { background-color: #020617; background-image: radial-gradient(circle at 1px 1px, #334155 1px, transparent 0); background-size: 25px 25px; }
-        .dark #history-list li:hover { background-color: #334155; }
-        .dark .leaflet-control-geocoder a, .dark .leaflet-control-zoom a, .dark #locate-btn { background-color: #1e293b; color: #ffffff; border: 1px solid #334155; }
-        .dark .leaflet-control-geocoder, .dark .leaflet-control-zoom { border: 1px solid #334155; }
-        .dark .leaflet-control-geocoder-form input { background-color: #334155; color: #ffffff; }
-        .dark #data-panel { background-color: rgba(30, 41, 59, 0.9); }
-        .dark .bg-gray-100 { background-color: #334155; }
-        .dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
-        .dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+        .leaflet-control-container .leaflet-top { top: 80px; }
+        @media (max-width: 640px) { .leaflet-control-container .leaflet-top { top: 90px; } }
         
         /* --- Weather Animation Styles --- */
-        #weather-animation-container { background: linear-gradient(to bottom, #87CEEB, #B0E0E6); transition: background 0.5s; }
-        .dark #weather-animation-container { background: linear-gradient(to bottom, #0c1445, #2d3748); }
+        #weather-animation-container { background: linear-gradient(to bottom, #0c1445, #2d3748); }
         #weather-animation { position: relative; width: 100%; height: 100%; }
         .sun, .cloud, .rain, .snow, .mist, .thunder { position: absolute; }
         .sun { top: 15%; left: 50%; width: 40px; height: 40px; background: #FFD700; border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 20px #FFD700; }
@@ -104,121 +328,193 @@
         .cloud::after { width: 50px; height: 50px; top: -10px; left: 5px; }
         .cloud.c2 { animation-delay: -5s; top: 45%; transform: scale(0.8); }
         @keyframes move-cloud { 0% { left: -80px; } 100% { left: 110%; } }
-        .rain { left: 0; top: 0; width: 100%; height: 100%; }
         .rain > div { position: absolute; width: 2px; height: 10px; background: #77aadd; animation: fall 1s linear infinite; }
         @keyframes fall { 0% { transform: translateY(-20px); } 100% { transform: translateY(120px); } }
         .snow > div { position: absolute; width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: snowfall 5s linear infinite; }
         @keyframes snowfall { 0% { transform: translateY(-20px) translateX(0); } 100% { transform: translateY(120px) translateX(20px); } }
-        .mist > div { position: absolute; width: 120%; height: 30px; background: rgba(255,255,255,0.4); border-radius: 15px; bottom: 0; left: -10%; animation: move-mist 10s linear infinite alternate; }
-        .mist > div.m2 { animation-delay: -5s; opacity: 0.7; }
+        .mist > div { position: absolute; width: 120%; height: 30px; background: rgba(255,255,255,0.2); border-radius: 15px; bottom: 0; left: -10%; animation: move-mist 10s linear infinite alternate; }
+        .mist > div.m2 { animation-delay: -5s; opacity: 0.5; }
         @keyframes move-mist { from { transform: translateX(-20px); } to { transform: translateX(20px); } }
         .thunder { width: 100%; height: 100%; background: rgba(255, 255, 0, 0.3); opacity: 0; animation: lightning 3s linear infinite; }
         @keyframes lightning { 0%, 100% { opacity: 0; } 50% { opacity: 1; } 52% { opacity: 0; } 55% { opacity: 1; } 56% { opacity: 0; } }
 
-        .talkback-highlight { background-color: rgba(59, 130, 246, 0.4); }
+        .talkback-highlight { background-color: rgba(79, 70, 229, 0.4); }
 
-        /* Scroll Animations */
+        /* --- Scroll Animations --- */
         .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
         .animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
         .team-card { transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; }
-        .team-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-        .dark .team-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.4); }
+        .team-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 0 15px var(--color-accent-glow), 0 0 25px var(--color-accent-glow);
+        }
+        .aqi-level-card {
+            border-left-width: 4px;
+        }
+
+        /* --- Light Mode Overrides --- */
+        html.light body {
+            --color-bg: #f8fafc;
+            --color-bg-panel: rgba(255, 255, 255, 0.8);
+            --color-text: #1f2937;
+            --color-text-muted: #6b7280;
+            --border-color: rgba(209, 213, 219, 0.7);
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        html.light .text-gray-200 { color: var(--color-text); }
+        html.light .glass-panel {
+            background-color: var(--color-bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--color-text);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        html.light .text-white { color: #111827 !important; }
+        html.light .text-gray-300 { color: #4b5563; }
+        html.light .text-gray-400 { color: #6b7280; }
+        html.light .border-gray-700 { border-color: #e5e7eb; }
+        html.light .border-gray-800 { border-color: #d1d5db; }
+        html.light .modal-input {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+            color: #111827;
+        }
+        html.light .modal-input:focus {
+            border-color: var(--color-accent);
+            box-shadow: 0 0 5px var(--color-accent-glow);
+        }
+        html.light .hero-bg {
+            background-color: #e0e7ff;
+            background-image: none;
+        }
+        html.light #stars1, html.light #stars2, html.light #stars3, html.light #shooting-stars-container, html.light .section-banner {
+            display: none;
+        }
+        html.light .leaflet-tile-pane { filter: none; }
+        html.light .leaflet-control-geocoder a, html.light .leaflet-control-zoom a, html.light #locate-btn {
+            background-color: #fff !important;
+            color: #1f2937 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        html.light .leaflet-control-geocoder-form input {
+            background-color: #fff !important;
+            color: #111827 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        html.light header, html.light footer {
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        html.light .hover\:text-indigo-400:hover { color: #4f46e5; }
+        html.light .team-card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        html.light .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+        html.light #weather-animation-container {
+            background: linear-gradient(to bottom, #87CEEB, #B0E0E6);
+        }
+        html.light #sidebar { color: var(--color-text); }
+        html.light .bg-transparent { background-color: #f8fafc; }
+        html.light .text-red-400 { color: #ef4444; }
+        html.light .text-green-400 { color: #22c55e; }
+        html.light .text-indigo-400 { color: #6366f1; }
+        html.light .text-indigo-300 { color: #818cf8; }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-gray-200">
 
     <!-- Auth Modals -->
     <div id="auth-modals">
         <!-- Login Modal -->
-        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-                <button id="close-login-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="loginTitle">Login to Your Account</h3>
+        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-login-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="loginTitle">Login to Your Account</h3>
                 <form id="login-form">
-                    <input id="login-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
-                    <input id="login-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Password" data-lang-key="passwordPlaceholder">
+                    <input id="login-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="login-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Password" data-lang-key="passwordPlaceholder">
                     <div class="text-right mb-4">
-                        <a href="#" id="forgot-password-link" class="text-sm text-blue-600 hover:underline" data-lang-key="forgotPasswordLink">Forgot Password?</a>
+                        <a href="#" id="forgot-password-link" class="text-sm text-indigo-400 hover:underline" data-lang-key="forgotPasswordLink">Forgot Password?</a>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="loginButton">Login</button>
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="loginButton">Login</button>
                 </form>
-                <p id="login-error" class="text-red-500 text-sm mt-4 text-center"></p>
+                <p id="login-error" class="text-red-400 text-sm mt-4 text-center"></p>
                 <p class="text-center mt-4">
-                    <span data-lang-key="noAccount">Don't have an account?</span>
-                    <a href="#" id="show-signup" class="text-blue-600 hover:underline" data-lang-key="signupLink">Sign up</a>
+                    <span data-lang-key="noAccount" class="text-gray-400">Don't have an account?</span>
+                    <a href="#" id="show-signup" class="text-indigo-400 hover:underline" data-lang-key="signupLink">Sign up</a>
                 </p>
             </div>
         </div>
         <!-- Signup Modal -->
-        <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-                 <button id="close-signup-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="signupTitle">Create a New Account</h3>
+        <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-signup-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="signupTitle">Create a New Account</h3>
                 <form id="signup-form">
-                    <input id="signup-name" type="text" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Full Name" data-lang-key="namePlaceholder">
-                    <input id="signup-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
-                    <input id="signup-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder">
-                    <button type="submit" class="w-full bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700" data-lang-key="signupButton">Sign Up</button>
+                    <input id="signup-name" type="text" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <input id="signup-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="signup-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="signupButton">Sign Up</button>
                 </form>
-                <p id="signup-error" class="text-red-500 text-sm mt-4 text-center"></p>
+                <p id="signup-error" class="text-red-400 text-sm mt-4 text-center"></p>
                 <p class="text-center mt-4">
-                    <span data-lang-key="hasAccount">Already have an account?</span>
-                    <a href="#" id="show-login" class="text-blue-600 hover:underline" data-lang-key="loginLink">Login</a>
+                    <span data-lang-key="hasAccount" class="text-gray-400">Already have an account?</span>
+                    <a href="#" id="show-login" class="text-indigo-400 hover:underline" data-lang-key="loginLink">Login</a>
                 </p>
             </div>
         </div>
         <!-- Forgot Password Modal -->
-        <div id="forgot-password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-                 <button id="close-forgot-password-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="forgotPasswordTitle">Reset Password</h3>
+        <div id="forgot-password-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-forgot-password-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="forgotPasswordTitle">Reset Password</h3>
                 <form id="forgot-password-form">
-                    <p class="text-center text-gray-600 mb-4" data-lang-key="forgotPasswordInstructions">Enter your email and we'll send you a link to reset your password.</p>
-                    <input id="forgot-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
-                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="sendResetLinkButton">Send Reset Link</button>
+                    <p class="text-center text-gray-300 mb-4" data-lang-key="forgotPasswordInstructions">Enter your email and we'll send you a link to reset your password.</p>
+                    <input id="forgot-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="sendResetLinkButton">Send Reset Link</button>
                 </form>
                 <p id="forgot-password-feedback" class="text-sm mt-4 text-center"></p>
             </div>
         </div>
         <!-- Change Password Modal -->
-        <div id="password-change-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-                <button id="close-password-change-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="changePasswordTitle">Change Password</h3>
+        <div id="password-change-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-password-change-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="changePasswordTitle">Change Password</h3>
                 <form id="password-change-form">
-                    <input id="current-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Current Password" data-lang-key="currentPasswordPlaceholder" autocomplete="current-password">
-                    <input id="new-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder" autocomplete="new-password">
-                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="changePasswordButton">Update Password</button>
+                    <input id="current-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Current Password" data-lang-key="currentPasswordPlaceholder" autocomplete="current-password">
+                    <input id="new-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder" autocomplete="new-password">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="changePasswordButton">Update Password</button>
                 </form>
                 <p id="password-change-feedback" class="text-sm mt-4 text-center"></p>
             </div>
         </div>
         <!-- Edit Profile Modal -->
-        <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
-                <button id="close-edit-profile-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="editProfileTitle">Edit Profile</h3>
+        <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-edit-profile-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="editProfileTitle">Edit Profile</h3>
                 <form id="edit-profile-form">
-                    <input id="edit-name" type="text" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Full Name" data-lang-key="namePlaceholder">
-                    <hr class="my-4">
-                    <p class="text-sm text-gray-500 mb-2" data-lang-key="editEmailInstructions">To change your email, please enter your current password.</p>
-                    <input id="edit-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
-                    <input id="edit-password-verify" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" placeholder="Current Password for verification" data-lang-key="currentPasswordPlaceholder">
-                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 flex justify-center items-center" data-lang-key="saveChangesButton">Save Changes</button>
+                    <input id="edit-name" type="text" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <hr class="my-4 border-gray-700">
+                    <p class="text-sm text-gray-400 mb-2" data-lang-key="editEmailInstructions">To change your email, please enter your current password.</p>
+                    <input id="edit-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="edit-password-verify" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" placeholder="Current Password for verification" data-lang-key="currentPasswordPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="saveChangesButton">Save Changes</button>
                 </form>
                 <p id="edit-profile-feedback" class="text-sm mt-4 text-center"></p>
             </div>
         </div>
         <!-- History Modal -->
-        <div id="history-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
-             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg mx-4 relative">
-                <button id="close-history-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
-                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="historyTitle">Search History</h3>
+        <div id="history-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-lg mx-4 relative">
+                <button id="close-history-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="historyTitle">Search History</h3>
                 <div id="history-list-container" class="max-h-96 overflow-y-auto">
                     <ul id="history-list" class="space-y-2">
                         <!-- History items will be injected here -->
                     </ul>
-                    <p id="no-history-message" class="text-center text-gray-500 hidden" data-lang-key="noHistory">Your search history is empty.</p>
+                    <p id="no-history-message" class="text-center text-gray-400 hidden" data-lang-key="noHistory">Your search history is empty.</p>
                 </div>
             </div>
         </div>
@@ -226,45 +522,47 @@
     
     <!-- Sidebar -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
-    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg z-40 transform -translate-x-full p-6">
-        <button id="close-sidebar-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-white text-2xl">&times;</button>
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 glass-panel z-40 transform -translate-x-full p-6">
+        <button id="close-sidebar-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
         <div class="mt-8 space-y-4">
             <!-- Auth Buttons / User Menu -->
             <div id="sidebar-auth-logged-out" class="space-y-2">
                 <button id="login-btn-sidebar" class="w-full bg-gray-700 text-white px-3 py-2 rounded-lg font-semibold hover:bg-gray-600" data-lang-key="navLogin">Login</button>
-                <button id="signup-btn-sidebar" class="w-full bg-blue-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-blue-700" data-lang-key="navSignup">Sign Up</button>
+                <button id="signup-btn-sidebar" class="w-full glow-button text-white px-3 py-2 rounded-lg font-semibold" data-lang-key="navSignup">Sign Up</button>
             </div>
             <div id="sidebar-auth-logged-in" class="hidden">
-                 <h3 class="font-bold text-lg" id="sidebar-user-name"></h3>
-                 <a href="#" id="edit-profile-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuEditProfile">Edit Profile</a>
-                 <a href="#" id="history-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuHistory">Search History</a>
-                 <a href="#" id="change-password-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuChangePassword">Change Password</a>
-                 <a href="#" id="logout-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuLogout">Logout</a>
+                <h3 class="font-bold text-lg text-white" id="sidebar-user-name"></h3>
+                <a href="#" id="edit-profile-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuEditProfile">Edit Profile</a>
+                <a href="#" id="history-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuHistory">Search History</a>
+                <a href="#" id="change-password-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuChangePassword">Change Password</a>
+                <a href="#" id="logout-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuLogout">Logout</a>
             </div>
-             <hr class="dark:border-gray-700">
-             <!-- Navigation Links -->
-             <a href="#" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navHome">Home</a>
-             <a href="#map" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navMap">Map</a>
-             <a href="#team" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navTeam">Our Team</a>
-             <hr class="dark:border-gray-700">
+            <hr class="border-gray-700">
+            <!-- Navigation Links -->
+            <a href="#" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navHome">Home</a>
+            <a href="#mission" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navMission">Our Mission</a>
+            <a href="#aqi-guide" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navAqiGuide">AQI Guide</a>
+            <a href="#map" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navMap">Map</a>
+            <a href="#team" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navTeam">Our Team</a>
+            <hr class="border-gray-700">
             <!-- Settings -->
             <div class="space-y-4">
-                 <h3 class="font-bold text-lg text-gray-900 dark:text-white" data-lang-key="navSettings">Settings</h3>
+                <h3 class="font-bold text-lg text-white" data-lang-key="navSettings">Settings</h3>
+                <div class="flex items-center justify-between">
+                    <span class="text-gray-300" data-lang-key="navLanguage">Language</span>
+                    <div class="flex space-x-1">
+                        <button id="lang-en-sidebar" class="font-semibold text-sm py-1 px-2 rounded">EN</button>
+                        <button id="lang-ar-sidebar" class="font-semibold text-sm py-1 px-2 rounded">AR</button>
+                    </div>
+                </div>
                  <div class="flex items-center justify-between">
-                     <span class="text-gray-700 dark:text-gray-300" data-lang-key="navLanguage">Language</span>
-                     <div class="flex space-x-1">
-                         <button id="lang-en-sidebar" class="font-semibold text-sm py-1 px-2 rounded">EN</button>
-                         <button id="lang-ar-sidebar" class="font-semibold text-sm py-1 px-2 rounded">AR</button>
-                     </div>
-                 </div>
-                 <div class="flex items-center justify-between">
-                     <span class="text-gray-700 dark:text-gray-300" data-lang-key="navTheme">Theme</span>
-                     <button id="theme-toggle-sidebar" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"></button>
-                 </div>
-                 <div class="flex items-center justify-between">
-                     <label for="talkback-toggle" class="text-gray-700 dark:text-gray-300" data-lang-key="navTalkback">Read on Hover</label>
-                     <input type="checkbox" id="talkback-toggle" class="form-checkbox h-5 w-5 text-blue-600">
-                 </div>
+                    <span class="text-gray-300" data-lang-key="navTheme">Theme</span>
+                    <button id="theme-toggle-sidebar" class="p-2 rounded-lg text-gray-400 hover:bg-gray-700"></button>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label for="talkback-toggle" class="text-gray-300" data-lang-key="navTalkback">Read on Hover</label>
+                    <input type="checkbox" id="talkback-toggle" class="form-checkbox h-5 w-5 text-indigo-500 bg-gray-700 border-gray-600 rounded">
+                </div>
             </div>
         </div>
     </div>
@@ -272,80 +570,133 @@
 
     <!-- Main Content -->
     <div id="main-content">
-        <header class="bg-gray-900/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-20">
+        <header class="bg-black/30 backdrop-blur-sm fixed top-0 left-0 right-0 z-20">
             <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
                 <button id="menu-btn" class="text-white p-2 rounded-lg hover:bg-gray-700">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
                 <a href="#" id="home-logo-link" class="flex items-center space-x-2">
-                     <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png" alt="Logo" class="h-8 w-8">
-                     <h1 class="text-lg sm:text-xl font-bold text-white" data-lang-key="appName">Air Quality Monitor</h1>
+                    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png" alt="Logo" class="h-8 w-8">
+                    <h1 class="text-lg sm:text-xl font-bold text-white" data-lang-key="appName">Air Quality Monitor</h1>
                 </a>
             </nav>
         </header>
 
         <!-- Landing Page View -->
         <div id="landing-page">
-            <section class="hero-bg text-white pt-48 sm:pt-32 pb-20 text-center animate-on-scroll">
-                <div class="container mx-auto px-4">
-                    <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 leading-tight" data-lang-key="heroTitle">Breathe Clearer. Live Better.</h2>
+            <section class="hero-bg text-white pt-48 sm:pt-32 pb-20 text-center">
+                <div id="stars1"></div>
+                <div id="stars2"></div>
+                <div id="stars3"></div>
+                <div id="shooting-stars-container"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-40 z-0 pointer-events-none">
+                    <div class="section-banner">
+                        <div id="star-1">
+                            <div class="curved-corner-star">
+                                <div id="curved-corner-bottomright"></div>
+                                <div id="curved-corner-bottomleft"></div>
+                            </div>
+                            <div class="curved-corner-star">
+                                <div id="curved-corner-topright"></div>
+                                <div id="curved-corner-topleft"></div>
+                            </div>
+                        </div>
+                        <div id="star-2"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                        <div id="star-3"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                        <div id="star-4"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                        <div id="star-5"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                        <div id="star-6"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                        <div id="star-7"><div class="curved-corner-star"><div id="curved-corner-bottomright"></div><div id="curved-corner-bottomleft"></div></div><div class="curved-corner-star"><div id="curved-corner-topright"></div><div id="curved-corner-topleft"></div></div></div>
+                    </div>
+                </div>
+                <div class="container mx-auto px-4 relative z-10 animate-on-scroll">
+                    <h2 class="text-3xl sm:text-4xl md:text-6xl font-black mb-4 leading-tight uppercase" data-lang-key="heroTitle">Breathe Clearer. Live Better.</h2>
                     <p class="text-base sm:text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto" data-lang-key="heroSubtitle">Your real-time guide to the air you breathe. We provide live, accurate air quality data to help you make healthier decisions every day.</p>
-                    <a href="#map" id="launch-map-btn" class="bg-blue-600 text-white text-lg px-8 py-4 rounded-lg font-bold hover:bg-blue-700 transition-transform transform hover:scale-105 inline-block" data-lang-key="heroButton">Launch Live Map</a>
+                    <a href="#map" id="launch-map-btn" class="glow-button text-white text-lg px-8 py-4 rounded-lg font-bold inline-block" data-lang-key="heroButton">Launch Live Map</a>
                 </div>
             </section>
             
-            <section id="about-features" class="py-20 bg-white">
+            <section id="about-features" class="py-20 bg-transparent">
                 <div class="container mx-auto px-4">
                     <div class="text-center mb-16 animate-on-scroll">
-                        <h2 class="text-3xl md:text-4xl font-bold" data-lang-key="aboutTitle">A Comprehensive Tool for Your Well-being</h2>
-                        <p class="text-gray-600 mt-4 max-w-3xl mx-auto" data-lang-key="aboutSubtitle">We combine air quality, weather data, and personalized features to give you a complete picture of your environment.</p>
+                        <h2 class="text-3xl md:text-4xl font-bold text-white" data-lang-key="aboutTitle">A Comprehensive Tool for Your Well-being</h2>
+                        <p class="text-gray-400 mt-4 max-w-3xl mx-auto" data-lang-key="aboutSubtitle">We combine air quality, weather data, and personalized features to give you a complete picture of your environment.</p>
                     </div>
             
                     <div class="space-y-16">
                         <div class="flex flex-wrap items-center animate-on-scroll">
                             <div class="w-full md:w-1/2 lg:w-5/12 px-4 md:pr-8">
-                                <div class="p-3 text-blue-600 bg-blue-100 rounded-full inline-block mb-4">
+                                <div class="p-3 text-indigo-400 bg-indigo-900/50 rounded-full inline-block mb-4">
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 </div>
-                                <h3 class="text-2xl font-bold mb-3" data-lang-key="feature1Title">Live Interactive Map</h3>
-                                <p class="text-gray-600" data-lang-key="feature1Desc">Our core feature is a dynamic world map. Click anywhere to get instant, real-time Air Quality Index (AQI) data from the nearest monitoring station. Track pollution levels in your city or anywhere you plan to travel.</p>
+                                <h3 class="text-2xl font-bold mb-3 text-white" data-lang-key="feature1Title">Live Interactive Map</h3>
+                                <p class="text-gray-400" data-lang-key="feature1Desc">Our core feature is a dynamic world map. Click anywhere to get instant, real-time Air Quality Index (AQI) data from the nearest monitoring station. Track pollution levels in your city or anywhere you plan to travel.</p>
                             </div>
                             <div class="w-full md:w-1/2 lg:w-7/12 mt-8 md:mt-0">
-                                <img src="https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Laptop with map" class="rounded-lg shadow-xl">
+                                <img src="https://images.unsplash.com/photo-1614728263952-84ea256ec346?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="Planet from space" class="rounded-lg shadow-2xl shadow-indigo-900/50">
                             </div>
                         </div>
 
-                         <div class="flex flex-wrap items-center flex-col-reverse md:flex-row-reverse animate-on-scroll">
+                        <div class="flex flex-wrap items-center flex-col-reverse md:flex-row-reverse animate-on-scroll">
                             <div class="w-full md:w-1/2 lg:w-5/12 px-4 md:pl-8 mt-8 md:mt-0">
-                                <div class="p-3 text-green-600 bg-green-100 rounded-full inline-block mb-4">
+                                <div class="p-3 text-green-400 bg-green-900/50 rounded-full inline-block mb-4">
                                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 </div>
-                                <h3 class="text-2xl font-bold mb-3" data-lang-key="feature2Title">Detailed Data & Weather</h3>
-                                <p class="text-gray-600" data-lang-key="feature2Desc">Beyond the AQI number, our detailed panel shows you crucial weather information like temperature, humidity, and wind speed. This helps you understand how weather conditions affect air quality.</p>
+                                <h3 class="text-2xl font-bold mb-3 text-white" data-lang-key="feature2Title">Detailed Data & Weather</h3>
+                                <p class="text-gray-400" data-lang-key="feature2Desc">Beyond the AQI number, our detailed panel shows you crucial weather information like temperature, humidity, and wind speed. This helps you understand how weather conditions affect air quality.</p>
                             </div>
                             <div class="w-full md:w-1/2 lg:w-7/12">
-                                <img src="https://blogger.googleusercontent.com/img/a/AVvXsEik6YyOCHbuvpICg9Ps2SQIUJVYrTNaB1aPbVILr79xK87h5qLCL-9zyAuQvzrVPVZQcc0s9v2OGyhp1cMJx1jfQ8HkKE0M_1DtACaCud51rj-FNBhhmLxZQedEOX-hkEnI_87XOKSnRWclh5lFcw3OH-pnioaE5vp973_JIi3Cyuhru5FwUhyZE-E8gT8" alt="Weather dashboard" class="rounded-lg shadow-xl">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="Futuristic data dashboard" class="rounded-lg shadow-2xl shadow-indigo-900/50">
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
-        </div>
-        
-        <!-- Page Content Views (Team) -->
-        <div id="page-content" class="hidden pt-20">
-            <!-- Team Section -->
-            <section id="team-page" class="hidden py-12 bg-white">
+
+             <!-- Mission Section -->
+            <section id="mission" class="py-20 bg-transparent">
+                <div class="container mx-auto px-4">
+                    <div class="glass-panel rounded-lg p-8 md:p-12 animate-on-scroll">
+                        <div class="text-center">
+                            <h2 class="text-3xl md:text-4xl font-bold text-white mb-2" data-lang-key="missionTitle">Our Mission: Earth's Health from a Celestial View</h2>
+                            <p class="text-lg text-indigo-300 mb-2" data-lang-key="missionSubtitle">A NASA Space Apps Challenge 2025 Project</p>
+                            <p class="text-gray-400 italic mt-2 mb-6 max-w-3xl mx-auto" data-lang-key="missionChallengeName"></p>
+                            <p class="text-gray-300 max-w-4xl mx-auto mb-4" data-lang-key="missionDesc">This project was born out of the NASA Space Apps Challenge Cairo 2025, marking the 11th local edition of this global event. Our goal is to leverage the power of data, inspired by space exploration, to bring crucial environmental information to your fingertips. By monitoring air quality, we aim to foster a healthier relationship between humanity and our home planet.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AQI Guide Section -->
+            <section id="aqi-guide" class="py-20 bg-transparent">
                 <div class="container mx-auto px-4">
                     <div class="text-center mb-16 animate-on-scroll">
-                        <h2 class="text-3xl md:text-4xl font-bold" data-lang-key="teamTitle">Meet Our Team</h2>
-                        <p class="text-lg text-gray-500 mt-2 italic" data-lang-key="teamSlogan">Together, we build solutions for a better tomorrow.</p>
+                        <h2 class="text-3xl md:text-4xl font-bold text-white" data-lang-key="aqiGuideTitle">Understanding the Air Quality Index (AQI)</h2>
+                        <p class="text-gray-400 mt-4 max-w-3xl mx-auto" data-lang-key="aqiGuideDesc">The AQI is your guide to understanding how clean or polluted the air is. Here's a quick breakdown of the levels:</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                        <!-- AQI Levels will be injected here by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Section -->
+            <section id="team" class="py-20 bg-transparent">
+                 <div class="container mx-auto px-4">
+                    <div class="text-center mb-16 animate-on-scroll">
+                        <h2 class="text-3xl md:text-4xl font-bold text-white" data-lang-key="teamTitle">Meet Our Team</h2>
+                        <p class="text-lg text-gray-400 mt-2 italic" data-lang-key="teamSlogan">Together, we build solutions for a better tomorrow.</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
                         <!-- Team Member Cards will be injected here -->
                     </div>
                 </div>
             </section>
+
+        </div>
+        
+        <!-- Page Content Views (Initially empty container for other pages if needed) -->
+        <div id="page-content" class="hidden pt-20">
         </div>
 
         <!-- Map & App Section (Initially Hidden) -->
@@ -358,7 +709,7 @@
     </div>
 
     <!-- Footer -->
-    <footer class="bg-gray-100 dark:bg-black py-6 text-center text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+    <footer class="bg-black/30 py-6 text-center text-gray-400 border-t border-gray-800">
         <div class="container mx-auto px-4">
             <p data-lang-key="footerText">&copy; 2024 All rights reserved for Digital Minds team</p>
         </div>
@@ -397,11 +748,11 @@
 
         // --- TEAM DATA ---
         const teamMembers = [
-            { name: "Ahmed Salem Khalifa", role: "Team Lead & LLM Specialist", desc: "Responsible for the overall project vision, managing the development timeline, and coordinating the team's tasks. His expertise as an LLM Specialist will guide any future integrations of AI-powered features.", img: "https://i.ibb.co/RGtFVr0L/IMG-20241204-WA0010-Copy.jpg" },
+            { name: "Ahmed Salem Khalifa", role: "Team Lead & LLM Specialist", desc: "Responsible for the overall project vision, managing the development timeline, and coordinating the team's tasks. His expertise as an LLM Specialist will guide any future integrations of AI-powered features.", img: "https://i.ibb.co/RGtFVr0/IMG-20241204-WA0010-Copy.jpg" },
             { name: "Roqaya Mohamed Ahmed", role: "Business Strategist & Frontend Developer", desc: "Responsible for aligning the project with market needs and developing the business strategy. She will also contribute to frontend development, focusing on a user-friendly interface.", img: "https://i.ibb.co/VZpYzy3/Whats-App-Image-2025-09-26-at-15-55-43-eed85144.jpg" },
-            { name: "Ahmed Essam Wagdy", role: "Frontend Developer & Researcher", desc: "Responsible for implementing core features like the interactive map and API integrations. His research skills are crucial for finding the best technical solutions.", img: "https://i.ibb.co/rKYQGD4k/Whats-App-Image-2025-09-26-at-1-11-41-AM.jpg" },
-            { name: "Loay Ahmed Abo El-Maty", role: "Frontend Developer & Researcher", desc: "Responsible for developing features such as the animated weather graphics. He will also conduct research to support the technical implementation.", img: "https://i.ibb.co/39htsQ0s/Whats-App-Image-2025-09-24-at-11-41-20-PM.jpg" },
-            { name: "Ziad Mohamed Hamdy", role: "Social Media Specialist", desc: "Responsible for managing the project's public presence and communication strategy. He will handle social media updates and community engagement to build awareness.", img: "https://i.ibb.co/mC62Nmx9/Whats-App-Image-2025-09-26-at-6-59-23-PM.jpg" },
+            { name: "Ahmed Essam Wagdy", role: "Frontend Developer & Researcher", desc: "Responsible for implementing core features like the interactive map and API integrations. His research skills are crucial for finding the best technical solutions.", img: "https://i.ibb.co/rKYQGD4/Whats-App-Image-2025-09-26-at-1-11-41-AM.jpg" },
+            { name: "Loay Ahmed Abo El-Maty", role: "Frontend Developer & Researcher", desc: "Responsible for developing features such as the animated weather graphics. He will also conduct research to support the technical implementation.", img: "https://i.ibb.co/39htsQ0/Whats-App-Image-2025-09-24-at-11-41-20-PM.jpg" },
+            { name: "Ziad Mohamed Hamdy", role: "Social Media Specialist", desc: "Responsible for managing the project's public presence and communication strategy. He will handle social media updates and community engagement to build awareness.", img: "https://i.ibb.co/mC62Nmx/Whats-App-Image-2025-09-26-at-6-59-23-PM.jpg" },
         ];
 
 
@@ -414,6 +765,8 @@
                 navHome: "Home",
                 navMap: "Map",
                 navTeam: "Our Team",
+                navMission: "Our Mission",
+                navAqiGuide: "AQI Guide",
                 navSettings: "Settings",
                 navLanguage: "Language",
                 navTheme: "Theme",
@@ -423,6 +776,12 @@
                 heroButton: "Launch Live Map",
                 teamTitle: "Meet Our Team",
                 teamSlogan: "Together, we build solutions for a better tomorrow.",
+                missionTitle: "Our Mission: Earth's Health from a Celestial View",
+                missionSubtitle: "A NASA Space Apps Challenge 2025 Project",
+                missionChallengeName: "From EarthData to Action: Cloud Computing with Earth Observation Data for Predicting Cleaner, Safer Skies",
+                missionDesc: "This project was born out of the NASA Space Apps Challenge Cairo 2025, marking the 11th local edition of this global event. Our goal is to leverage the power of data, inspired by space exploration, to bring crucial environmental information to your fingertips. By monitoring air quality, we aim to foster a healthier relationship between humanity and our home planet.",
+                aqiGuideTitle: "Understanding the Air Quality Index (AQI)",
+                aqiGuideDesc: "The AQI is your guide to understanding how clean or polluted the air is. Here's a quick breakdown of the levels:",
                 namePlaceholder: "Full Name",
                 emailPlaceholder: "Email",
                 passwordPlaceholder: "Password",
@@ -493,6 +852,8 @@
                 navHome: "الرئيسية",
                 navMap: "الخريطة",
                 navTeam: "فريقنا",
+                navMission: "مهمتنا",
+                navAqiGuide: "دليل جودة الهواء",
                 navSettings: "الإعدادات",
                 navLanguage: "اللغة",
                 navTheme: "المظهر",
@@ -502,6 +863,12 @@
                 heroButton: "افتح الخريطة المباشرة",
                 teamTitle: "تعرف على فريقنا",
                 teamSlogan: "معًا، نبني حلولًا من أجل غد أفضل.",
+                missionTitle: "مهمتنا: صحة الأرض من منظور سماوي",
+                missionSubtitle: "مشروع مقدم لتحدي NASA Space Apps لعام 2025",
+                missionChallengeName: "من بيانات الأرض إلى العمل: الحوسبة السحابية مع بيانات مراقبة الأرض للتنبؤ بسماء أنظف وأكثر أمانًا",
+                missionDesc: "وُلد هذا المشروع من رحم تحدي NASA Space Apps القاهرة 2025، والذي يمثل النسخة المحلية الحادية عشرة من هذا الحدث العالمي. هدفنا هو تسخير قوة البيانات، المستوحاة من استكشاف الفضاء، لوضع المعلومات البيئية الحيوية في متناول يدك. من خلال مراقبة جودة الهواء، نطمح إلى تعزيز علاقة صحية بين الإنسانية وكوكبنا الأم.",
+                aqiGuideTitle: "فهم مؤشر جودة الهواء (AQI)",
+                aqiGuideDesc: "مؤشر جودة الهواء هو دليلك لفهم مدى نقاء أو تلوث الهواء. إليك شرح سريع للمستويات:",
                 namePlaceholder: "الاسم الكامل",
                 emailPlaceholder: "البريد الإلكتروني",
                 passwordPlaceholder: "كلمة المرور",
@@ -588,7 +955,6 @@
             // --- UI ELEMENTS ---
             const landingPage = document.getElementById('landing-page');
             const pageContent = document.getElementById('page-content');
-            const teamPage = document.getElementById('team-page');
             const mapView = document.getElementById('map-view');
             const mapContainer = document.getElementById('map-container');
             const sidebar = document.getElementById('sidebar');
@@ -620,7 +986,9 @@
             let isTalkbackEnabled = false;
             let currentHighlight = null;
             const allViews = [landingPage, mapView, pageContent];
-            const pageViews = { '#team': teamPage };
+            const pageViews = {}; // Team page is now on landing page
+            const landingPageAnchors = ['#mission', '#aqi-guide', '#about-features', '#team'];
+
 
             // --- TEXT-TO-SPEECH VOICE LOADER ---
             function loadVoices() {
@@ -631,41 +999,85 @@
                 speechSynthesis.onvoiceschanged = loadVoices;
             }
 
-            // --- TEAM SECTION RENDER ---
+            // --- RENDER DYNAMIC CONTENT ---
             function renderTeam() {
-                const teamContainer = document.querySelector('#team-page .grid');
-                 if(!teamContainer) return;
+                const teamContainer = document.querySelector('#team .grid');
+                if(!teamContainer) return;
                 teamContainer.innerHTML = ''; // Clear existing
                 teamMembers.forEach((member, index) => {
                     const card = document.createElement('div');
-                    card.className = "team-card bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md text-center animate-on-scroll";
+                    card.className = "team-card glass-panel p-6 rounded-lg text-center animate-on-scroll";
                     card.style.transitionDelay = `${index * 100}ms`;
                     card.innerHTML = `
-                        <img src="${member.img}" onerror="this.onerror=null;this.src='https://placehold.co/100x100/E2E8F0/4A5568?text=${member.name.charAt(0)}';" alt="Photo of ${member.name}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-gray-200 dark:border-gray-700 object-cover">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">${member.name}</h3>
-                        <p class="text-blue-600 dark:text-blue-400 font-semibold">${member.role}</p>
-                        <p class="text-gray-600 dark:text-gray-400 mt-2 text-sm">${member.desc}</p>
+                        <img src="${member.img}" onerror="this.onerror=null;this.src='https://placehold.co/100x100/E2E8F0/4A5568?text=${member.name.charAt(0)}';" alt="Photo of ${member.name}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-indigo-500/50 object-cover">
+                        <h3 class="text-xl font-bold text-white">${member.name}</h3>
+                        <p class="text-indigo-400 font-semibold">${member.role}</p>
+                        <p class="text-gray-400 mt-2 text-sm">${member.desc}</p>
                     `;
                     teamContainer.appendChild(card);
                 });
             }
-            renderTeam();
+
+            function renderAqiGuide() {
+                const aqiContainer = document.querySelector('#aqi-guide .grid');
+                if (!aqiContainer) return;
+                aqiContainer.innerHTML = '';
+                const aqiLevels = [
+                    { range: '0 - 50', statusKey: 'aqiStatusGood', adviceKey: 'aqiAdviceGood', color: '#22c55e' },
+                    { range: '51 - 100', statusKey: 'aqiStatusModerate', adviceKey: 'aqiAdviceModerate', color: '#facc15' },
+                    { range: '101 - 150', statusKey: 'aqiStatusUnhealthySensitive', adviceKey: 'aqiAdviceUnhealthySensitive', color: '#f97316' },
+                    { range: '151 - 200', statusKey: 'aqiStatusUnhealthy', adviceKey: 'aqiAdviceUnhealthy', color: '#ef4444' },
+                    { range: '201 - 300', statusKey: 'aqiStatusVeryUnhealthy', adviceKey: 'aqiAdviceVeryUnhealthy', color: '#a855f7' },
+                    { range: '301+', statusKey: 'aqiStatusHazardous', adviceKey: 'aqiAdviceHazardous', color: '#7f1d1d' },
+                ];
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+
+                aqiLevels.forEach((level, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-panel p-4 rounded-lg aqi-level-card animate-on-scroll';
+                    card.style.borderColor = level.color;
+                    card.style.transitionDelay = `${index * 100}ms`;
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="font-bold text-lg text-white">${translations[currentLang][level.statusKey]}</p>
+                            <p class="font-black text-xl" style="color: ${level.color};">${level.range}</p>
+                        </div>
+                        <p class="text-gray-400 text-sm">${translations[currentLang][level.adviceKey]}</p>
+                    `;
+                    aqiContainer.appendChild(card);
+                });
+            }
             
+            // --- Create Shooting Stars ---
+            const shootingStarsContainer = document.getElementById('shooting-stars-container');
+            if (shootingStarsContainer) {
+                const numberOfStars = 15;
+                for (let i = 0; i < numberOfStars; i++) {
+                    let star = document.createElement('div');
+                    star.classList.add('shooting-star');
+                    star.style.top = `${Math.random() * 100}%`;
+                    star.style.animationDelay = `${Math.random() * 10}s`;
+                    star.style.animationDuration = `${(Math.random() * 2) + 1}s`; // Duration between 1s and 3s
+                    shootingStarsContainer.appendChild(star);
+                }
+            }
+            
+            renderTeam();
+            renderAqiGuide();
             
             // --- THEME/DARK MODE LOGIC ---
             const applyTheme = (theme) => {
-                const icon = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"></svg>`;
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-7-8a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm14 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-2.929-5.071a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zm-9.142 9.142a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707.707zm9.142 0a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707zm-9.142-9.142a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>`;
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`;
+                if (theme === 'light') {
+                    document.documentElement.classList.add('light');
+                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`; // Moon icon
+                } else { // 'dark' is default
+                    document.documentElement.classList.remove('light');
+                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-7-8a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm14 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-2.929-5.071a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zm-9.142 9.142a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707.707zm9.142 0a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707zm-9.142-9.142a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>`; // Sun icon
                 }
             };
 
             const toggleTheme = () => {
-                const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                const currentTheme = localStorage.getItem('theme') || 'dark';
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 localStorage.setItem('theme', newTheme);
                 applyTheme(newTheme);
@@ -673,7 +1085,7 @@
 
             themeToggleSidebar.addEventListener('click', toggleTheme);
 
-            const initialTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            const initialTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(initialTheme);
             
             // --- SECURITY HELPER ---
@@ -689,11 +1101,8 @@
                 document.documentElement.lang = lang;
                 document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
                 
-                const bodyClasses = ['lang-' + lang, 'text-gray-800'];
-                if(document.documentElement.classList.contains('dark')) {
-                    bodyClasses.push('dark');
-                }
-                document.body.className = bodyClasses.join(' ');
+                document.body.classList.remove('lang-en', 'lang-ar');
+                document.body.classList.add('lang-' + lang);
 
                 document.querySelectorAll('[data-lang-key]').forEach(element => {
                     const key = element.getAttribute('data-lang-key');
@@ -713,7 +1122,8 @@
                         geocoderControl.placeholder = translations[lang].searchPlaceholder;
                     }
                 }
-
+                
+                renderAqiGuide(); // Re-render AQI guide with new language
                 localStorage.setItem('preferredLanguage', lang);
                 updateLangButtons(lang);
             };
@@ -722,11 +1132,11 @@
                 const langEnBtnSidebar = document.getElementById('lang-en-sidebar');
                 const langArBtnSidebar = document.getElementById('lang-ar-sidebar');
                 if (lang === 'ar') {
-                    langArBtnSidebar.classList.add('bg-blue-600', 'text-white');
-                    langEnBtnSidebar.classList.remove('bg-blue-600', 'text-white');
+                    langArBtnSidebar.classList.add('bg-indigo-600', 'text-white');
+                    langEnBtnSidebar.classList.remove('bg-indigo-600', 'text-white');
                 } else {
-                    langEnBtnSidebar.classList.add('bg-blue-600', 'text-white');
-                    langArBtnSidebar.classList.remove('bg-blue-600', 'text-white');
+                    langEnBtnSidebar.classList.add('bg-indigo-600', 'text-white');
+                    langArBtnSidebar.classList.remove('bg-indigo-600', 'text-white');
                 }
             };
             
@@ -761,7 +1171,7 @@
                 speechSynthesis.cancel();
                 allViews.forEach(v => v.classList.add('hidden'));
                 Object.values(pageViews).forEach(v => v.classList.add('hidden'));
-
+                
                 if (hash === '#map' && auth.currentUser) {
                     mapView.classList.remove('hidden');
                     if (!mapInitialized) {
@@ -769,14 +1179,19 @@
                         mapInitialized = true;
                     }
                     setTimeout(() => { if (map) map.invalidateSize(); }, 0);
-                } else if (pageViews[hash]) {
-                    pageContent.classList.remove('hidden');
-                    pageViews[hash].classList.remove('hidden');
                 } else {
                     landingPage.classList.remove('hidden');
+                    if (hash && (landingPageAnchors.includes(hash))) {
+                         const targetElement = document.getElementById(hash.substring(1));
+                         if (targetElement) {
+                             setTimeout(() => targetElement.scrollIntoView({ behavior: 'smooth' }), 0);
+                         }
+                    } else {
+                        window.scrollTo(0, 0);
+                    }
                 }
-                window.scrollTo(0, 0);
-                setTimeout(handleScrollAnimation, 100); // Trigger animations on new page
+                
+                setTimeout(handleScrollAnimation, 100);
             }
             
              // --- "TALKBACK" TEXT-TO-SPEECH LOGIC ---
@@ -926,7 +1341,17 @@
             closeSidebarBtn.addEventListener('click', closeSidebar);
             sidebarOverlay.addEventListener('click', closeSidebar);
             document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.addEventListener('click', closeSidebar);
+                link.addEventListener('click', (e) => {
+                    const href = link.getAttribute('href');
+                    if (!href.startsWith('#') || href === '#') {
+                        // Let default behavior for external links
+                    } else {
+                        // For all internal hash links, prevent default and let our logic handle it
+                        e.preventDefault();
+                        window.location.hash = href;
+                    }
+                    closeSidebar();
+                });
             });
 
 
@@ -979,7 +1404,7 @@
                     return updatePassword(user, newPassword);
                 }).then(() => {
                     feedbackEl.textContent = translations[currentLang].passwordUpdateSuccess;
-                    feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                    feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
                     passwordChangeForm.reset();
                     setTimeout(() => { closeAllModals(); }, 2000);
                 }).catch((error) => {
@@ -988,7 +1413,7 @@
                     } else {
                         feedbackEl.textContent = error.message;
                     }
-                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
                 });
             });
 
@@ -1001,13 +1426,13 @@
                 sendPasswordResetEmail(auth, email)
                     .then(() => {
                         feedbackEl.textContent = translations[currentLang].resetEmailSent;
-                        feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                        feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
                         forgotPasswordForm.reset();
                          setTimeout(() => { closeAllModals(); }, 3000);
                     })
                     .catch((error) => {
                         feedbackEl.textContent = error.message;
-                        feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                        feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
                     });
             });
 
@@ -1024,7 +1449,7 @@
                 const sanitizedName = sanitizeInput(newName);
                 if (newName !== sanitizedName) {
                     feedbackEl.textContent = "Invalid characters in name.";
-                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
                     return;
                 }
 
@@ -1049,7 +1474,7 @@
                     
                     if (nameChanged || emailChanged) {
                         feedbackEl.textContent = translations[currentLang].profileUpdateSuccess;
-                        feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                        feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
                     }
 
                     setTimeout(() => { closeAllModals(); }, 2000);
@@ -1060,7 +1485,7 @@
                     } else {
                         feedbackEl.textContent = error.message;
                     }
-                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
                 } finally {
                      submitBtn.disabled = false;
                      submitBtn.textContent = translations[currentLang].saveChangesButton;
@@ -1101,10 +1526,10 @@
                         snapshot.forEach(doc => {
                             const data = doc.data();
                             const li = document.createElement('li');
-                            li.className = 'p-3 border-b';
+                            li.className = 'p-3 border-b border-gray-700 hover:bg-gray-800 cursor-pointer rounded-md';
                             li.innerHTML = `
-                                <p class="font-semibold">${data.name}</p>
-                                <p class="text-sm text-gray-500">Searched on: ${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
+                                <p class="font-semibold text-white">${data.name}</p>
+                                <p class="text-sm text-gray-400">Searched on: ${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
                             `;
                             li.addEventListener('click', () => {
                                 closeAllModals();
@@ -1119,7 +1544,7 @@
                     }
                 } catch (error) {
                     console.error("Error getting history: ", error);
-                    historyList.innerHTML = `<p class="text-red-500 text-center">Could not load history.</p>`;
+                    historyList.innerHTML = `<p class="text-red-400 text-center">Could not load history.</p>`;
                 }
             };
 
@@ -1134,33 +1559,33 @@
                 // Inject map UI elements
                 mapContainer.innerHTML = `
                     <div id="map"></div>
-                    <button id="locate-btn" class="absolute bottom-4 left-4 z-[1000] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Find my location">
-                        <svg id="locate-icon" xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+                    <button id="locate-btn" class="absolute bottom-4 left-4 z-[1000] p-3 rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Find my location">
+                        <svg id="locate-icon" xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" class="text-gray-300"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
                     </button>
-                    <div id="data-panel" class="absolute top-[100px] sm:top-24 left-2 right-2 sm:left-auto sm:right-4 sm:w-80 z-[1000] bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg hidden" data-readable="true">
+                    <div id="data-panel" class="absolute top-[100px] sm:top-24 left-2 right-2 sm:left-auto sm:right-4 sm:w-80 z-[1000] glass-panel p-4 rounded-lg hidden" data-readable="true">
                         <div id="loading" class="flex justify-center items-center h-48"><div class="loader"></div></div>
                         <div id="data-content" class="hidden">
-                            <button id="close-panel-btn" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 z-10 p-1 rounded-full hover:bg-gray-100"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button>
-                            <h2 id="city-name" class="text-xl font-bold text-gray-800 pr-6">...</h2>
-                            <p id="update-time" class="text-xs text-gray-500">...</p>
-                            <hr class="my-3">
+                            <button id="close-panel-btn" class="absolute top-2 right-2 text-gray-400 hover:text-white z-10 p-1 rounded-full hover:bg-gray-700"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button>
+                            <h2 id="city-name" class="text-xl font-bold text-white pr-6">...</h2>
+                            <p id="update-time" class="text-xs text-gray-400">...</p>
+                            <hr class="my-3 border-gray-700">
                             <div class="text-center">
-                                <p class="text-sm text-gray-600" data-lang-key="dataPanelAQI">Air Quality Index (AQI)</p>
-                                <div id="aqi-value" class="text-6xl font-bold my-2 text-gray-700">--</div>
-                                <div id="aqi-status" class="px-3 py-1 text-white rounded-full text-sm inline-block bg-gray-400">...</div>
+                                <p class="text-sm text-gray-400" data-lang-key="dataPanelAQI">Air Quality Index (AQI)</p>
+                                <div id="aqi-value" class="text-6xl font-bold my-2 text-white">--</div>
+                                <div id="aqi-status" class="px-3 py-1 text-white rounded-full text-sm inline-block bg-gray-600">...</div>
                             </div>
                             <div id="weather-animation-container" class="relative h-24 my-2 overflow-hidden rounded-lg">
                                 <div id="weather-animation"></div>
                             </div>
-                            <p id="weather-description" class="text-center text-lg capitalize mb-2"></p>
+                            <p id="weather-description" class="text-center text-lg capitalize mb-2 text-white"></p>
                             <div class="mt-4 grid grid-cols-3 gap-2 text-center">
-                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelTemp">Temp</p><p id="temp-value" class="font-bold text-lg">--°C</p></div>
-                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelHumidity">Humidity</p><p id="humidity-value" class="font-bold text-lg">--%</p></div>
-                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelWind">Wind</p><p id="wind-value" class="font-bold text-lg">-- km/h</p></div>
+                                <div><p class="text-xs text-gray-400" data-lang-key="dataPanelTemp">Temp</p><p id="temp-value" class="font-bold text-lg text-white">--°C</p></div>
+                                <div><p class="text-xs text-gray-400" data-lang-key="dataPanelHumidity">Humidity</p><p id="humidity-value" class="font-bold text-lg text-white">--%</p></div>
+                                <div><p class="text-xs text-gray-400" data-lang-key="dataPanelWind">Wind</p><p id="wind-value" class="font-bold text-lg text-white">-- km/h</p></div>
                             </div>
-                            <div class="mt-4 bg-gray-100 p-2 rounded-lg">
-                                <h4 class="font-bold text-sm" data-lang-key="dataPanelHealthAdvice">Health Advice:</h4>
-                                <p id="forecast-text" class="text-xs text-gray-700">Analyzing data...</p>
+                            <div class="mt-4 bg-gray-900/50 p-2 rounded-lg">
+                                <h4 class="font-bold text-sm text-white" data-lang-key="dataPanelHealthAdvice">Health Advice:</h4>
+                                <p id="forecast-text" class="text-xs text-gray-300">Analyzing data...</p>
                             </div>
                         </div>
                     </div>
@@ -1266,7 +1691,7 @@
                         rainHTML += '</div>';
                         weatherAnimationEl.innerHTML = rainHTML;
                     } else if (weatherId >= 200 && weatherId <= 232) { // Thunderstorm
-                         let rainHTML = '<div class="cloud" style="background: #888;"></div><div class="thunder"></div><div class="rain">';
+                        let rainHTML = '<div class="cloud" style="background: #888;"></div><div class="thunder"></div><div class="rain">';
                         for(let i=0; i<20; i++) {
                             const left = Math.random() * 100;
                             const delay = Math.random() * 2;
