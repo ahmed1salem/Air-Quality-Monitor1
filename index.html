@@ -423,12 +423,121 @@
 </head>
 <body class="text-gray-200">
 
+    <!-- Auth Modals -->
+    <div id="auth-modals">
+        <!-- Login Modal -->
+        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-login-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="loginTitle">Login to Your Account</h3>
+                <form id="login-form">
+                    <input id="login-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="login-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Password" data-lang-key="passwordPlaceholder">
+                    <div class="text-right mb-4">
+                        <a href="#" id="forgot-password-link" class="text-sm text-indigo-400 hover:underline" data-lang-key="forgotPasswordLink">Forgot Password?</a>
+                    </div>
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="loginButton">Login</button>
+                </form>
+                <p id="login-error" class="text-red-400 text-sm mt-4 text-center"></p>
+                <p class="text-center mt-4">
+                    <span data-lang-key="noAccount" class="text-gray-400">Don't have an account?</span>
+                    <a href="#" id="show-signup" class="text-indigo-400 hover:underline" data-lang-key="signupLink">Sign up</a>
+                </p>
+            </div>
+        </div>
+        <!-- Signup Modal -->
+        <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-signup-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="signupTitle">Create a New Account</h3>
+                <form id="signup-form">
+                    <input id="signup-name" type="text" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <input id="signup-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="signup-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="signupButton">Sign Up</button>
+                </form>
+                <p id="signup-error" class="text-red-400 text-sm mt-4 text-center"></p>
+                <p class="text-center mt-4">
+                    <span data-lang-key="hasAccount" class="text-gray-400">Already have an account?</span>
+                    <a href="#" id="show-login" class="text-indigo-400 hover:underline" data-lang-key="loginLink">Login</a>
+                </p>
+            </div>
+        </div>
+        <!-- Forgot Password Modal -->
+        <div id="forgot-password-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-forgot-password-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="forgotPasswordTitle">Reset Password</h3>
+                <form id="forgot-password-form">
+                    <p class="text-center text-gray-300 mb-4" data-lang-key="forgotPasswordInstructions">Enter your email and we'll send you a link to reset your password.</p>
+                    <input id="forgot-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="sendResetLinkButton">Send Reset Link</button>
+                </form>
+                <p id="forgot-password-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- Change Password Modal -->
+        <div id="password-change-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-password-change-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="changePasswordTitle">Change Password</h3>
+                <form id="password-change-form">
+                    <input id="current-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Current Password" data-lang-key="currentPasswordPlaceholder" autocomplete="current-password">
+                    <input id="new-password" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder" autocomplete="new-password">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="changePasswordButton">Update Password</button>
+                </form>
+                <p id="password-change-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- Edit Profile Modal -->
+        <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-md mx-4 relative">
+                <button id="close-edit-profile-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="editProfileTitle">Edit Profile</h3>
+                <form id="edit-profile-form">
+                    <input id="edit-name" type="text" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <hr class="my-4 border-gray-700">
+                    <p class="text-sm text-gray-400 mb-2" data-lang-key="editEmailInstructions">To change your email, please enter your current password.</p>
+                    <input id="edit-email" type="email" class="w-full p-3 mb-4 rounded-lg modal-input" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="edit-password-verify" type="password" class="w-full p-3 mb-4 rounded-lg modal-input" placeholder="Current Password for verification" data-lang-key="currentPasswordPlaceholder">
+                    <button type="submit" class="w-full glow-button text-white p-3 rounded-lg font-bold" data-lang-key="saveChangesButton">Save Changes</button>
+                </form>
+                <p id="edit-profile-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- History Modal -->
+        <div id="history-modal" class="fixed inset-0 bg-black bg-opacity-75 z-[2000] flex justify-center items-center hidden">
+            <div class="glass-panel p-8 rounded-lg w-full max-w-lg mx-4 relative">
+                <button id="close-history-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center text-white" data-lang-key="historyTitle">Search History</h3>
+                <div id="history-list-container" class="max-h-96 overflow-y-auto">
+                    <ul id="history-list" class="space-y-2">
+                        <!-- History items will be injected here -->
+                    </ul>
+                    <p id="no-history-message" class="text-center text-gray-400 hidden" data-lang-key="noHistory">Your search history is empty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Sidebar -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
     <div id="sidebar" class="fixed top-0 left-0 h-full w-64 glass-panel z-40 transform -translate-x-full p-6">
         <button id="close-sidebar-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
         <div class="mt-8 space-y-4">
+            <!-- Auth Buttons / User Menu -->
+            <div id="sidebar-auth-logged-out" class="space-y-2">
+                <button id="login-btn-sidebar" class="w-full bg-gray-700 text-white px-3 py-2 rounded-lg font-semibold hover:bg-gray-600" data-lang-key="navLogin">Login</button>
+                <button id="signup-btn-sidebar" class="w-full glow-button text-white px-3 py-2 rounded-lg font-semibold" data-lang-key="navSignup">Sign Up</button>
+            </div>
+            <div id="sidebar-auth-logged-in" class="hidden">
+                <h3 class="font-bold text-lg text-white" id="sidebar-user-name"></h3>
+                <a href="#" id="edit-profile-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuEditProfile">Edit Profile</a>
+                <a href="#" id="history-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuHistory">Search History</a>
+                <a href="#" id="change-password-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuChangePassword">Change Password</a>
+                <a href="#" id="logout-btn-sidebar" class="block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="menuLogout">Logout</a>
+            </div>
+            <hr class="border-gray-700">
             <!-- Navigation Links -->
             <a href="#" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navHome">Home</a>
             <a href="#mission" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navMission">Our Mission</a>
@@ -474,7 +583,7 @@
         </header>
 
         <!-- Landing Page View -->
-        <div id="landing-page" class="hidden">
+        <div id="landing-page">
             <section class="hero-bg text-white pt-48 sm:pt-32 pb-20 text-center">
                 <div id="stars1"></div>
                 <div id="stars2"></div>
@@ -503,6 +612,7 @@
                 <div class="container mx-auto px-4 relative z-10 animate-on-scroll">
                     <h2 class="text-3xl sm:text-4xl md:text-6xl font-black mb-4 leading-tight uppercase" data-lang-key="heroTitle">Breathe Clearer. Live Better.</h2>
                     <p class="text-base sm:text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto" data-lang-key="heroSubtitle">Your real-time guide to the air you breathe. We provide live, accurate air quality data to help you make healthier decisions every day.</p>
+                    <a href="#map" id="launch-map-btn" class="glow-button text-white text-lg px-8 py-4 rounded-lg font-bold inline-block" data-lang-key="heroButton">Launch Live Map</a>
                 </div>
             </section>
             
@@ -590,7 +700,7 @@
         </div>
 
         <!-- Map & App Section (Initially Hidden) -->
-        <div id="map-view" class="">
+        <div id="map-view" class="hidden">
              <div id="map-container" class="relative">
                 <div id="map"></div>
                 <!-- Data Panel and other map overlays will be added here by JavaScript -->
@@ -610,6 +720,31 @@
         // Import Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            updatePassword,
+            EmailAuthProvider,
+            reauthenticateWithCredential,
+            sendPasswordResetEmail,
+            updateProfile,
+            updateEmail
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc,
+            doc,
+            setDoc, 
+            query, 
+            orderBy, 
+            limit, 
+            getDocs, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         // --- TEAM DATA ---
         const teamMembers = [
@@ -801,6 +936,21 @@
         document.addEventListener('DOMContentLoaded', () => {
             
             // --- FIREBASE CONFIGURATION ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyBuyUNk6-0OglHwO_N7Ar2V7IR_WjAH41M",
+                authDomain: "air-quality-monitor-6717a.firebaseapp.com",
+                projectId: "air-quality-monitor-6717a",
+                storageBucket: "air-quality-monitor-6717a.appspot.com",
+                messagingSenderId: "864803225125",
+                appId: "1:864803225125:web:b058d248c460be218749cc",
+                measurementId: "G-KQFHV5T3VX"
+            };
+            
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
             
             // --- UI ELEMENTS ---
             const landingPage = document.getElementById('landing-page');
@@ -811,6 +961,22 @@
             const sidebarOverlay = document.getElementById('sidebar-overlay');
             const menuBtn = document.getElementById('menu-btn');
             const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+            const loggedOutSidebar = document.getElementById('sidebar-auth-logged-out');
+            const loggedInSidebar = document.getElementById('sidebar-auth-logged-in');
+            const sidebarUserName = document.getElementById('sidebar-user-name');
+            const loginModal = document.getElementById('login-modal');
+            const signupModal = document.getElementById('signup-modal');
+            const passwordChangeModal = document.getElementById('password-change-modal');
+            const forgotPasswordModal = document.getElementById('forgot-password-modal');
+            const editProfileModal = document.getElementById('edit-profile-modal');
+            const historyModal = document.getElementById('history-modal');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const passwordChangeForm = document.getElementById('password-change-form');
+            const forgotPasswordForm = document.getElementById('forgot-password-form');
+            const editProfileForm = document.getElementById('edit-profile-form');
+            const historyList = document.getElementById('history-list');
+            const noHistoryMessage = document.getElementById('no-history-message');
             const themeToggleSidebar = document.getElementById('theme-toggle-sidebar');
             const talkbackToggle = document.getElementById('talkback-toggle');
 
@@ -1005,20 +1171,24 @@
                 speechSynthesis.cancel();
                 allViews.forEach(v => v.classList.add('hidden'));
                 Object.values(pageViews).forEach(v => v.classList.add('hidden'));
-
-                if (hash.startsWith('#') && landingPageAnchors.includes(hash)) {
-                    landingPage.classList.remove('hidden');
-                    const targetElement = document.getElementById(hash.substring(1));
-                    if (targetElement) {
-                        setTimeout(() => targetElement.scrollIntoView({ behavior: 'smooth' }), 0);
-                    }
-                } else { // Default to map view
+                
+                if (hash === '#map' && auth.currentUser) {
                     mapView.classList.remove('hidden');
                     if (!mapInitialized) {
                         initializeMapApp();
                         mapInitialized = true;
                     }
                     setTimeout(() => { if (map) map.invalidateSize(); }, 0);
+                } else {
+                    landingPage.classList.remove('hidden');
+                    if (hash && (landingPageAnchors.includes(hash))) {
+                         const targetElement = document.getElementById(hash.substring(1));
+                         if (targetElement) {
+                             setTimeout(() => targetElement.scrollIntoView({ behavior: 'smooth' }), 0);
+                         }
+                    } else {
+                        window.scrollTo(0, 0);
+                    }
                 }
                 
                 setTimeout(handleScrollAnimation, 100);
@@ -1091,6 +1261,28 @@
             });
 
 
+            // --- AUTHENTICATION STATE OBSERVER ---
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    loggedInSidebar.classList.remove('hidden');
+                    loggedOutSidebar.classList.add('hidden');
+                    sidebarUserName.textContent = user.displayName || user.email;
+                } else {
+                    loggedOutSidebar.classList.remove('hidden');
+                    loggedInSidebar.classList.add('hidden');
+                    sidebarUserName.textContent = '';
+                }
+                showPage(window.location.hash);
+            });
+            
+            document.getElementById('launch-map-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (auth.currentUser) {
+                    window.location.hash = '#map';
+                } else {
+                    loginModal.classList.remove('hidden');
+                }
+            });
             document.getElementById('home-logo-link').addEventListener('click', (e) => {
                 e.preventDefault();
                 window.location.hash = '';
@@ -1099,6 +1291,49 @@
             window.addEventListener('hashchange', () => showPage(window.location.hash));
             showPage(window.location.hash); // Initial load
 
+
+            // --- MODAL AND FORM HANDLING ---
+            document.getElementById('login-btn-sidebar').addEventListener('click', () => { closeSidebar(); loginModal.classList.remove('hidden'); });
+            document.getElementById('signup-btn-sidebar').addEventListener('click', () => { closeSidebar(); signupModal.classList.remove('hidden'); });
+            document.getElementById('change-password-btn-sidebar').addEventListener('click', (e) => { e.preventDefault(); closeSidebar(); passwordChangeModal.classList.remove('hidden'); });
+            document.getElementById('edit-profile-btn-sidebar').addEventListener('click', (e) => { 
+                e.preventDefault();
+                const user = auth.currentUser;
+                if (user) {
+                    document.getElementById('edit-name').value = user.displayName || '';
+                    document.getElementById('edit-email').value = user.email || '';
+                }
+                closeSidebar();
+                editProfileModal.classList.remove('hidden'); 
+            });
+            document.getElementById('history-btn-sidebar').addEventListener('click', (e) => { 
+                e.preventDefault();
+                closeSidebar();
+                displaySearchHistory();
+                historyModal.classList.remove('hidden'); 
+            });
+            document.getElementById('logout-btn-sidebar').addEventListener('click', (e) => {
+                e.preventDefault();
+                signOut(auth);
+                closeSidebar();
+            });
+
+            
+            const closeAllModals = () => {
+                document.querySelectorAll('#auth-modals > div').forEach(modal => modal.classList.add('hidden'));
+                const feedbackElements = document.querySelectorAll('#login-error, #signup-error, #password-change-feedback, #forgot-password-feedback, #edit-profile-feedback');
+                feedbackElements.forEach(el => el.textContent = '');
+            };
+
+            document.getElementById('close-login-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-signup-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-password-change-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-forgot-password-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-edit-profile-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-history-modal').addEventListener('click', closeAllModals);
+            
+            document.getElementById('show-signup').addEventListener('click', (e) => { e.preventDefault(); loginModal.classList.add('hidden'); signupModal.classList.remove('hidden'); });
+            document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); signupModal.classList.add('hidden'); loginModal.classList.remove('hidden'); });
 
              // Sidebar Toggle
             const closeSidebar = () => document.body.classList.remove('sidebar-open');
@@ -1119,6 +1354,199 @@
                 });
             });
 
+
+            // --- FIREBASE AUTH ACTIONS ---
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                
+                const sanitizedName = sanitizeInput(name);
+                if (name !== sanitizedName) {
+                    document.getElementById('signup-error').textContent = "Invalid characters in name.";
+                    return;
+                }
+
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        return updateProfile(userCredential.user, { displayName: sanitizedName });
+                    })
+                    .then(() => {
+                        closeAllModals();
+                        signupForm.reset();
+                    })
+                    .catch(error => { document.getElementById('signup-error').textContent = error.message; });
+            });
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => { closeAllModals(); loginForm.reset(); })
+                    .catch(error => { document.getElementById('login-error').textContent = error.message; });
+            });
+
+            passwordChangeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const user = auth.currentUser;
+                const feedbackEl = document.getElementById('password-change-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+
+                if (!user) return;
+                
+                const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+                reauthenticateWithCredential(user, credential).then(() => {
+                    return updatePassword(user, newPassword);
+                }).then(() => {
+                    feedbackEl.textContent = translations[currentLang].passwordUpdateSuccess;
+                    feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
+                    passwordChangeForm.reset();
+                    setTimeout(() => { closeAllModals(); }, 2000);
+                }).catch((error) => {
+                    if (error.code === 'auth/wrong-password') {
+                        feedbackEl.textContent = translations[currentLang].passwordUpdateError;
+                    } else {
+                        feedbackEl.textContent = error.message;
+                    }
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
+                });
+            });
+
+            forgotPasswordForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgot-email').value;
+                const feedbackEl = document.getElementById('forgot-password-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        feedbackEl.textContent = translations[currentLang].resetEmailSent;
+                        feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
+                        forgotPasswordForm.reset();
+                         setTimeout(() => { closeAllModals(); }, 3000);
+                    })
+                    .catch((error) => {
+                        feedbackEl.textContent = error.message;
+                        feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
+                    });
+            });
+
+            editProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('edit-name').value;
+                const newEmail = document.getElementById('edit-email').value;
+                const password = document.getElementById('edit-password-verify').value;
+                const user = auth.currentUser;
+                const feedbackEl = document.getElementById('edit-profile-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                const submitBtn = editProfileForm.querySelector('button[type="submit"]');
+
+                const sanitizedName = sanitizeInput(newName);
+                if (newName !== sanitizedName) {
+                    feedbackEl.textContent = "Invalid characters in name.";
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
+                    return;
+                }
+
+                if (!user) return;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<div class="loader" style="border-top-color: white; width: 20px; height: 20px; margin: auto; border-width: 2px;"></div>`;
+
+                try {
+                    const nameChanged = sanitizedName !== user.displayName;
+                    if (nameChanged) {
+                        await updateProfile(user, { displayName: sanitizedName });
+                    }
+
+                    const emailChanged = newEmail !== user.email;
+                    if (emailChanged) {
+                        if (!password) throw new Error("Password is required to change email.");
+                        const credential = EmailAuthProvider.credential(user.email, password);
+                        await reauthenticateWithCredential(user, credential);
+                        await updateEmail(user, newEmail);
+                    }
+                    
+                    if (nameChanged || emailChanged) {
+                        feedbackEl.textContent = translations[currentLang].profileUpdateSuccess;
+                        feedbackEl.className = "text-green-400 text-sm mt-4 text-center";
+                    }
+
+                    setTimeout(() => { closeAllModals(); }, 2000);
+
+                } catch (error) {
+                     if (error.code === 'auth/wrong-password') {
+                        feedbackEl.textContent = translations[currentLang].passwordUpdateError;
+                    } else {
+                        feedbackEl.textContent = error.message;
+                    }
+                    feedbackEl.className = "text-red-400 text-sm mt-4 text-center";
+                } finally {
+                     submitBtn.disabled = false;
+                     submitBtn.textContent = translations[currentLang].saveChangesButton;
+                }
+            });
+
+
+            // --- HISTORY LOGIC (FIRESTORE) ---
+            const saveSearchToHistory = (locationData) => {
+                const user = auth.currentUser;
+                if (!user) return;
+                
+                const historyRef = collection(db, 'users', user.uid, 'history');
+                addDoc(historyRef, {
+                    name: locationData.name,
+                    lat: locationData.lat,
+                    lng: locationData.lng,
+                    timestamp: serverTimestamp()
+                }).catch(error => console.error("Error adding document: ", error));
+            };
+
+            const displaySearchHistory = async () => {
+                const user = auth.currentUser;
+                if (!user) return;
+
+                historyList.innerHTML = '<div class="flex justify-center items-center h-48"><div class="loader"></div></div>';
+                noHistoryMessage.classList.add('hidden');
+
+                const historyRef = collection(db, 'users', user.uid, 'history');
+                const q = query(historyRef, orderBy('timestamp', 'desc'), limit(20));
+                
+                try {
+                    const snapshot = await getDocs(q);
+                    historyList.innerHTML = '';
+                    if (snapshot.empty) {
+                        noHistoryMessage.classList.remove('hidden');
+                    } else {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const li = document.createElement('li');
+                            li.className = 'p-3 border-b border-gray-700 hover:bg-gray-800 cursor-pointer rounded-md';
+                            li.innerHTML = `
+                                <p class="font-semibold text-white">${data.name}</p>
+                                <p class="text-sm text-gray-400">Searched on: ${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
+                            `;
+                            li.addEventListener('click', () => {
+                                closeAllModals();
+                                if(window.location.hash !== '#map') window.location.hash = '#map';
+                                setTimeout(() => {
+                                    map.setView([data.lat, data.lng], 13);
+                                    fetchAllDataForLocation(data.lat, data.lng);
+                                }, 100);
+                            });
+                            historyList.appendChild(li);
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error getting history: ", error);
+                    historyList.innerHTML = `<p class="text-red-400 text-center">Could not load history.</p>`;
+                }
+            };
 
             // --- MAP APPLICATION LOGIC (INITIALIZED ON DEMAND) ---
             function initializeMapApp() {
@@ -1196,6 +1624,7 @@
                 }).on('markgeocode', function(e) {
                     const { center, name } = e.geocode;
                     map.setView(center, 13);
+                    saveSearchToHistory({name: name, lat: center.lat, lng: center.lng});
                     marker.setLatLng(center).setOpacity(1);
                     fetchAllDataForLocation(center.lat, center.lng);
                 }).addTo(map);
@@ -1351,6 +1780,12 @@
                     const { lat, lng } = e.latlng;
                     marker.setLatLng(e.latlng).setOpacity(1);
                     fetchAllDataForLocation(lat, lng);
+                    const geocoder = L.Control.Geocoder.nominatim();
+                    geocoder.reverse(e.latlng, map.options.crs.scale(map.getZoom()), (results) => {
+                        if (results && results.length > 0) {
+                            saveSearchToHistory({ name: results[0].name, lat, lng });
+                        }
+                    });
                 });
                 
                 document.getElementById('close-panel-btn').addEventListener('click', () => {
