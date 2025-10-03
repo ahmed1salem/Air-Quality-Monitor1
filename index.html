@@ -71,6 +71,15 @@
             left: 1rem;
         }
 
+        /* RTL Overrides for Header */
+        html[dir="rtl"] header nav {
+            flex-direction: row-reverse;
+        }
+        /* Reverses the spacing between logo icon and text in RTL */
+        html[dir="rtl"] #home-logo-link.space-x-2 > :not([hidden]) ~ :not([hidden]) {
+            --tw-space-x-reverse: 1;
+        }
+
         /* --- Dark Mode Styles --- */
         .dark body { background-color: #0f172a; color: #e2e8f0; }
         .dark .bg-white { background-color: #1e293b; }
@@ -274,13 +283,13 @@
     <div id="main-content">
         <header class="bg-gray-900/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-20">
             <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <button id="menu-btn" class="text-white p-2 rounded-lg hover:bg-gray-700">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
                 <a href="#" id="home-logo-link" class="flex items-center space-x-2">
                      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png" alt="Logo" class="h-8 w-8">
                      <h1 class="text-lg sm:text-xl font-bold text-white" data-lang-key="appName">Air Quality Monitor</h1>
                 </a>
-                <button id="menu-btn" class="text-white p-2 rounded-lg hover:bg-gray-700">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </button>
             </nav>
         </header>
 
