@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Content Security Policy (CSP) for enhanced security -->
+    <meta http-equiv="Content-Security-Policy"  
+          content="default-src 'self'; 
+                   script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com https://www.gstatic.com https://cdn.jsdelivr.net; 
+                   style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com https://fonts.googleapis.com; 
+                   font-src 'self' https://fonts.gstatic.com; 
+                   img-src 'self' https: data: blob: https://raw.githubusercontent.com https://placehold.co https://i.ibb.co;
+                   connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://fcmtoken.googleapis.com https://api.waqi.info https://api.openweathermap.org https://api.openaq.org https://gibs.earthdata.nasa.gov https://www.google-analytics.com https://firebaseinstallations.googleapis.com;">
+
+    <title>Air Quality Monitor - Live AQI & Pollution Map by Digital Minds</title>
+    <meta name="description" content="Track real-time air quality and weather levels anywhere in the world. Get live AQI data, weather updates, and health recommendations with our interactive map, developed by the Digital Minds team.">
+    <meta name="keywords" content="air quality, aqi, pollution, live map, air quality index, weather, real-time data, digital minds, web developer, portfolio">
+    <meta name="author" content="Digital Minds">
+    <link rel="canonical" href="https://air-quality-monitor-3.netlify.app" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png">
+    
+    <!-- Tailwind CSS, Google Fonts, LeafletJS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=Cairo:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+    <style>
+        :root { --font-primary: 'Inter', sans-serif; --font-secondary: 'Cairo', sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { background-color: #f8fafc; color: #1f2937; scroll-behavior: smooth; overflow-x: hidden; transition: background-color 0.3s, color 0.3s; }
+        .lang-en { font-family: var(--font-primary); }
+        .lang-ar { font-family: var(--font-secondary); }
+        #map-container { height: 100vh; width: 100vw; }
+        #map { height: 100%; width: 100%; z-index: 1; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hero-bg { background-color: #111827; background-image: radial-gradient(circle at 1px 1px, #4b5563 1px, transparent 0); background-size: 25px 25px; }
+        .leaflet-control-geocoder-form input { font-family: var(--font-primary); }
+        html[lang="ar"] .leaflet-control-geocoder-form input { font-family: var(--font-secondary); }
+        #history-list li { cursor: pointer; transition: background-color: 0.2s; }
+        #history-list li:hover { background-color: #f3f4f6; }
+        
+        .leaflet-control-container .leaflet-top { top: 80px; }
+        @media (max-width: 640px) { .leaflet-control-container .leaflet-top { top: 90px; } }
+        
+        /* --- Sidebar Styles --- */
+        #sidebar { transition: transform 0.3s ease-in-out; }
+        #sidebar-overlay { transition: opacity 0.3s ease-in-out; }
+        .sidebar-open #sidebar { transform: translateX(0); }
+        .sidebar-open #sidebar-overlay { opacity: 1; pointer-events: auto; }
+
+        /* --- Dark Mode Styles --- */
+        .dark body { background-color: #0f172a; color: #e2e8f0; }
+        .dark .bg-white { background-color: #1e293b; }
+        .dark .bg-gray-50 { background-color: #0f172a; }
+        .dark .text-gray-800 { color: #ffffff; }
+        .dark .text-gray-900 { color: #ffffff; }
+        .dark .text-gray-600 { color: #94a3b8; }
+        .dark .text-gray-700 { color: #cbd5e1; }
+        .dark .text-gray-500 { color: #64748b; }
+        .dark .border, .dark .border-b, .dark .border-t { border-color: #334155; }
+        .dark .shadow-xl, .dark .shadow-lg, .dark .shadow-md { box-shadow: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.4); }
+        .dark .hero-bg { background-color: #020617; background-image: radial-gradient(circle at 1px 1px, #334155 1px, transparent 0); background-size: 25px 25px; }
+        .dark #history-list li:hover { background-color: #334155; }
+        .dark .leaflet-control-geocoder a, .dark .leaflet-control-zoom a, .dark #locate-btn { background-color: #1e293b; color: #ffffff; border: 1px solid #334155; }
+        .dark .leaflet-control-geocoder, .dark .leaflet-control-zoom { border: 1px solid #334155; }
+        .dark .leaflet-control-geocoder-form input { background-color: #334155; color: #ffffff; }
+        .dark #data-panel { background-color: rgba(30, 41, 59, 0.9); }
+        .dark .bg-gray-100 { background-color: #334155; }
+        .dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+        .dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9); }
+        
+        /* --- Weather Animation Styles --- */
+        #weather-animation-container { background: linear-gradient(to bottom, #87CEEB, #B0E0E6); transition: background 0.5s; }
+        .dark #weather-animation-container { background: linear-gradient(to bottom, #0c1445, #2d3748); }
+        #weather-animation { position: relative; width: 100%; height: 100%; }
+        .sun, .cloud, .rain, .snow, .mist, .thunder { position: absolute; }
+        .sun { top: 15%; left: 50%; width: 40px; height: 40px; background: #FFD700; border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 20px #FFD700; }
+        .cloud { background: #fff; border-radius: 50%; width: 60px; height: 60px; top: 30%; left: -80px; animation: move-cloud 15s linear infinite; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .cloud::before, .cloud::after { content: ''; position: absolute; background: #fff; border-radius: 50%; }
+        .cloud::before { width: 40px; height: 40px; top: -20px; right: 10px; }
+        .cloud::after { width: 50px; height: 50px; top: -10px; left: 5px; }
+        .cloud.c2 { animation-delay: -5s; top: 45%; transform: scale(0.8); }
+        @keyframes move-cloud { 0% { left: -80px; } 100% { left: 110%; } }
+        .rain { left: 0; top: 0; width: 100%; height: 100%; }
+        .rain > div { position: absolute; width: 2px; height: 10px; background: #77aadd; animation: fall 1s linear infinite; }
+        @keyframes fall { 0% { transform: translateY(-20px); } 100% { transform: translateY(120px); } }
+        .snow > div { position: absolute; width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: snowfall 5s linear infinite; }
+        @keyframes snowfall { 0% { transform: translateY(-20px) translateX(0); } 100% { transform: translateY(120px) translateX(20px); } }
+        .mist > div { position: absolute; width: 120%; height: 30px; background: rgba(255,255,255,0.4); border-radius: 15px; bottom: 0; left: -10%; animation: move-mist 10s linear infinite alternate; }
+        .mist > div.m2 { animation-delay: -5s; opacity: 0.7; }
+        @keyframes move-mist { from { transform: translateX(-20px); } to { transform: translateX(20px); } }
+        .thunder { width: 100%; height: 100%; background: rgba(255, 255, 0, 0.3); opacity: 0; animation: lightning 3s linear infinite; }
+        @keyframes lightning { 0%, 100% { opacity: 0; } 50% { opacity: 1; } 52% { opacity: 0; } 55% { opacity: 1; } 56% { opacity: 0; } }
+
+        .talkback-highlight { background-color: rgba(59, 130, 246, 0.4); }
+
+        /* Scroll Animations */
+        .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+        .team-card { transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; }
+        .team-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .dark .team-card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.4); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Auth Modals -->
+    <div id="auth-modals">
+        <!-- Login Modal -->
+        <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                <button id="close-login-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="loginTitle">Login to Your Account</h3>
+                <form id="login-form">
+                    <input id="login-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="login-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Password" data-lang-key="passwordPlaceholder">
+                    <div class="text-right mb-4">
+                        <a href="#" id="forgot-password-link" class="text-sm text-blue-600 hover:underline" data-lang-key="forgotPasswordLink">Forgot Password?</a>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="loginButton">Login</button>
+                </form>
+                <p id="login-error" class="text-red-500 text-sm mt-4 text-center"></p>
+                <p class="text-center mt-4">
+                    <span data-lang-key="noAccount">Don't have an account?</span>
+                    <a href="#" id="show-signup" class="text-blue-600 hover:underline" data-lang-key="signupLink">Sign up</a>
+                </p>
+            </div>
+        </div>
+        <!-- Signup Modal -->
+        <div id="signup-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                 <button id="close-signup-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="signupTitle">Create a New Account</h3>
+                <form id="signup-form">
+                    <input id="signup-name" type="text" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <input id="signup-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="signup-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder">
+                    <button type="submit" class="w-full bg-green-600 text-white p-3 rounded font-bold hover:bg-green-700" data-lang-key="signupButton">Sign Up</button>
+                </form>
+                <p id="signup-error" class="text-red-500 text-sm mt-4 text-center"></p>
+                <p class="text-center mt-4">
+                    <span data-lang-key="hasAccount">Already have an account?</span>
+                    <a href="#" id="show-login" class="text-blue-600 hover:underline" data-lang-key="loginLink">Login</a>
+                </p>
+            </div>
+        </div>
+        <!-- Forgot Password Modal -->
+        <div id="forgot-password-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+            <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                 <button id="close-forgot-password-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="forgotPasswordTitle">Reset Password</h3>
+                <form id="forgot-password-form">
+                    <p class="text-center text-gray-600 mb-4" data-lang-key="forgotPasswordInstructions">Enter your email and we'll send you a link to reset your password.</p>
+                    <input id="forgot-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="sendResetLinkButton">Send Reset Link</button>
+                </form>
+                <p id="forgot-password-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- Change Password Modal -->
+        <div id="password-change-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                <button id="close-password-change-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="changePasswordTitle">Change Password</h3>
+                <form id="password-change-form">
+                    <input id="current-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Current Password" data-lang-key="currentPasswordPlaceholder" autocomplete="current-password">
+                    <input id="new-password" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="New Password (min. 6 characters)" data-lang-key="newPasswordPlaceholder" autocomplete="new-password">
+                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700" data-lang-key="changePasswordButton">Update Password</button>
+                </form>
+                <p id="password-change-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- Edit Profile Modal -->
+        <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+                <button id="close-edit-profile-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="editProfileTitle">Edit Profile</h3>
+                <form id="edit-profile-form">
+                    <input id="edit-name" type="text" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Full Name" data-lang-key="namePlaceholder">
+                    <hr class="my-4">
+                    <p class="text-sm text-gray-500 mb-2" data-lang-key="editEmailInstructions">To change your email, please enter your current password.</p>
+                    <input id="edit-email" type="email" class="w-full p-3 mb-4 border rounded bg-transparent" required placeholder="Email" data-lang-key="emailPlaceholder">
+                    <input id="edit-password-verify" type="password" class="w-full p-3 mb-4 border rounded bg-transparent" placeholder="Current Password for verification" data-lang-key="currentPasswordPlaceholder">
+                    <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded font-bold hover:bg-blue-700 flex justify-center items-center" data-lang-key="saveChangesButton">Save Changes</button>
+                </form>
+                <p id="edit-profile-feedback" class="text-sm mt-4 text-center"></p>
+            </div>
+        </div>
+        <!-- History Modal -->
+        <div id="history-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[2000] flex justify-center items-center hidden">
+             <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg mx-4 relative">
+                <button id="close-history-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                <h3 class="text-2xl font-bold mb-6 text-center" data-lang-key="historyTitle">Search History</h3>
+                <div id="history-list-container" class="max-h-96 overflow-y-auto">
+                    <ul id="history-list" class="space-y-2">
+                        <!-- History items will be injected here -->
+                    </ul>
+                    <p id="no-history-message" class="text-center text-gray-500 hidden" data-lang-key="noHistory">Your search history is empty.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
+    <div id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white dark:bg-gray-900 shadow-lg z-40 transform -translate-x-full p-6">
+        <button id="close-sidebar-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 dark:hover:text-white text-2xl">&times;</button>
+        <div class="mt-8 space-y-4">
+            <!-- Auth Buttons / User Menu -->
+            <div id="sidebar-auth-logged-out" class="space-y-2">
+                <button id="login-btn-sidebar" class="w-full bg-gray-700 text-white px-3 py-2 rounded-lg font-semibold hover:bg-gray-600" data-lang-key="navLogin">Login</button>
+                <button id="signup-btn-sidebar" class="w-full bg-blue-600 text-white px-3 py-2 rounded-lg font-semibold hover:bg-blue-700" data-lang-key="navSignup">Sign Up</button>
+            </div>
+            <div id="sidebar-auth-logged-in" class="hidden">
+                 <h3 class="font-bold text-lg" id="sidebar-user-name"></h3>
+                 <a href="#" id="edit-profile-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuEditProfile">Edit Profile</a>
+                 <a href="#" id="history-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuHistory">Search History</a>
+                 <a href="#" id="change-password-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuChangePassword">Change Password</a>
+                 <a href="#" id="logout-btn-sidebar" class="block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="menuLogout">Logout</a>
+            </div>
+             <hr class="dark:border-gray-700">
+             <!-- Navigation Links -->
+             <a href="#" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navHome">Home</a>
+             <a href="#map" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navMap">Map</a>
+             <a href="#team" class="sidebar-link block py-2 text-gray-700 dark:text-gray-300 hover:text-blue-500" data-lang-key="navTeam">Our Team</a>
+             <hr class="dark:border-gray-700">
+            <!-- Settings -->
+            <div class="space-y-4">
+                 <h3 class="font-bold text-lg text-gray-900 dark:text-white" data-lang-key="navSettings">Settings</h3>
+                 <div class="flex items-center justify-between">
+                     <span class="text-gray-700 dark:text-gray-300" data-lang-key="navLanguage">Language</span>
+                     <div class="flex space-x-1">
+                         <button id="lang-en-sidebar" class="font-semibold text-sm py-1 px-2 rounded">EN</button>
+                         <button id="lang-ar-sidebar" class="font-semibold text-sm py-1 px-2 rounded">AR</button>
+                     </div>
+                 </div>
+                 <div class="flex items-center justify-between">
+                     <span class="text-gray-700 dark:text-gray-300" data-lang-key="navTheme">Theme</span>
+                     <button id="theme-toggle-sidebar" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"></button>
+                 </div>
+                 <div class="flex items-center justify-between">
+                     <label for="talkback-toggle" class="text-gray-700 dark:text-gray-300" data-lang-key="navTalkback">Read on Hover</label>
+                     <input type="checkbox" id="talkback-toggle" class="form-checkbox h-5 w-5 text-blue-600">
+                 </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <header class="bg-gray-900/80 backdrop-blur-sm fixed top-0 left-0 right-0 z-20">
+            <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <a href="#" id="home-logo-link" class="flex items-center space-x-2">
+                     <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png" alt="Logo" class="h-8 w-8">
+                     <h1 class="text-lg sm:text-xl font-bold text-white" data-lang-key="appName">Air Quality Monitor</h1>
+                </a>
+                <button id="menu-btn" class="text-white p-2 rounded-lg hover:bg-gray-700">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Landing Page View -->
+        <div id="landing-page">
+            <section class="hero-bg text-white pt-48 sm:pt-32 pb-20 text-center animate-on-scroll">
+                <div class="container mx-auto px-4">
+                    <h2 class="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 leading-tight" data-lang-key="heroTitle">Breathe Clearer. Live Better.</h2>
+                    <p class="text-base sm:text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto" data-lang-key="heroSubtitle">Your real-time guide to the air you breathe. We provide live, accurate air quality data to help you make healthier decisions every day.</p>
+                    <a href="#map" id="launch-map-btn" class="bg-blue-600 text-white text-lg px-8 py-4 rounded-lg font-bold hover:bg-blue-700 transition-transform transform hover:scale-105 inline-block" data-lang-key="heroButton">Launch Live Map</a>
+                </div>
+            </section>
+            
+            <section id="about-features" class="py-20 bg-white">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16 animate-on-scroll">
+                        <h2 class="text-3xl md:text-4xl font-bold" data-lang-key="aboutTitle">A Comprehensive Tool for Your Well-being</h2>
+                        <p class="text-gray-600 mt-4 max-w-3xl mx-auto" data-lang-key="aboutSubtitle">We combine air quality, weather data, and personalized features to give you a complete picture of your environment.</p>
+                    </div>
+            
+                    <div class="space-y-16">
+                        <div class="flex flex-wrap items-center animate-on-scroll">
+                            <div class="w-full md:w-1/2 lg:w-5/12 px-4 md:pr-8">
+                                <div class="p-3 text-blue-600 bg-blue-100 rounded-full inline-block mb-4">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-3" data-lang-key="feature1Title">Live Interactive Map</h3>
+                                <p class="text-gray-600" data-lang-key="feature1Desc">Our core feature is a dynamic world map. Click anywhere to get instant, real-time Air Quality Index (AQI) data from the nearest monitoring station. Track pollution levels in your city or anywhere you plan to travel.</p>
+                            </div>
+                            <div class="w-full md:w-1/2 lg:w-7/12 mt-8 md:mt-0">
+                                <img src="https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Laptop with map" class="rounded-lg shadow-xl">
+                            </div>
+                        </div>
+
+                         <div class="flex flex-wrap items-center flex-col-reverse md:flex-row-reverse animate-on-scroll">
+                            <div class="w-full md:w-1/2 lg:w-5/12 px-4 md:pl-8 mt-8 md:mt-0">
+                                <div class="p-3 text-green-600 bg-green-100 rounded-full inline-block mb-4">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-3" data-lang-key="feature2Title">Detailed Data & Weather</h3>
+                                <p class="text-gray-600" data-lang-key="feature2Desc">Beyond the AQI number, our detailed panel shows you crucial weather information like temperature, humidity, and wind speed. This helps you understand how weather conditions affect air quality.</p>
+                            </div>
+                            <div class="w-full md:w-1/2 lg:w-7/12">
+                                <img src="https://blogger.googleusercontent.com/img/a/AVvXsEik6YyOCHbuvpICg9Ps2SQIUJVYrTNaB1aPbVILr79xK87h5qLCL-9zyAuQvzrVPVZQcc0s9v2OGyhp1cMJx1jfQ8HkKE0M_1DtACaCud51rj-FNBhhmLxZQedEOX-hkEnI_87XOKSnRWclh5lFcw3OH-pnioaE5vp973_JIi3Cyuhru5FwUhyZE-E8gT8" alt="Weather dashboard" class="rounded-lg shadow-xl">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Page Content Views (Team) -->
+        <div id="page-content" class="hidden pt-20">
+            <!-- Team Section -->
+            <section id="team-page" class="hidden py-12 bg-white">
+                <div class="container mx-auto px-4">
+                    <div class="text-center mb-16 animate-on-scroll">
+                        <h2 class="text-3xl md:text-4xl font-bold" data-lang-key="teamTitle">Meet Our Team</h2>
+                        <p class="text-lg text-gray-500 mt-2 italic" data-lang-key="teamSlogan">Together, we build solutions for a better tomorrow.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <!-- Team Member Cards will be injected here -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Map & App Section (Initially Hidden) -->
+        <div id="map-view" class="hidden">
+             <div id="map-container" class="relative">
+                <div id="map"></div>
+                <!-- Data Panel and other map overlays will be added here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 dark:bg-black py-6 text-center text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+        <div class="container mx-auto px-4">
+            <p data-lang-key="footerText">&copy; 2024 All rights reserved for Digital Minds team</p>
+        </div>
+    </footer>
+
+    <!-- Main App Script -->
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            updatePassword,
+            EmailAuthProvider,
+            reauthenticateWithCredential,
+            sendPasswordResetEmail,
+            updateProfile,
+            updateEmail
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc,
+            doc,
+            setDoc, 
+            query, 
+            orderBy, 
+            limit, 
+            getDocs, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // --- TEAM DATA ---
+        const teamMembers = [
+            { name: "Ahmed Salem Khalifa", role: "Team Lead & LLM Specialist", desc: "Responsible for the overall project vision, managing the development timeline, and coordinating the team's tasks. His expertise as an LLM Specialist will guide any future integrations of AI-powered features.", img: "https://i.ibb.co/RGtFVr0L/IMG-20241204-WA0010-Copy.jpg" },
+            { name: "Roqaya Mohamed Ahmed", role: "Business Strategist & Frontend Developer", desc: "Responsible for aligning the project with market needs and developing the business strategy. She will also contribute to frontend development, focusing on a user-friendly interface.", img: "https://i.ibb.co/VZpYzy3/Whats-App-Image-2025-09-26-at-15-55-43-eed85144.jpg" },
+            { name: "Ahmed Essam Wagdy", role: "Frontend Developer & Researcher", desc: "Responsible for implementing core features like the interactive map and API integrations. His research skills are crucial for finding the best technical solutions.", img: "https://i.ibb.co/rKYQGD4k/Whats-App-Image-2025-09-26-at-1-11-41-AM.jpg" },
+            { name: "Loay Ahmed Abo El-Maty", role: "Frontend Developer & Researcher", desc: "Responsible for developing features such as the animated weather graphics. He will also conduct research to support the technical implementation.", img: "https://i.ibb.co/39htsQ0s/Whats-App-Image-2025-09-24-at-11-41-20-PM.jpg" },
+            { name: "Ziad Mohamed Hamdy", role: "Social Media Specialist", desc: "Responsible for managing the project's public presence and communication strategy. He will handle social media updates and community engagement to build awareness.", img: "https://i.ibb.co/mC62Nmx9/Whats-App-Image-2025-09-26-at-6-59-23-PM.jpg" },
+        ];
+
+
+        // --- TRANSLATIONS OBJECT ---
+        const translations = {
+            en: {
+                appName: "Air Quality Monitor",
+                navLogin: "Login",
+                navSignup: "Sign Up",
+                navHome: "Home",
+                navMap: "Map",
+                navTeam: "Our Team",
+                navSettings: "Settings",
+                navLanguage: "Language",
+                navTheme: "Theme",
+                navTalkback: "Read on Hover",
+                heroTitle: "Breathe Clearer. Live Better.",
+                heroSubtitle: "Your real-time guide to the air you breathe. We provide live, accurate air quality data to help you make healthier decisions every day.",
+                heroButton: "Launch Live Map",
+                teamTitle: "Meet Our Team",
+                teamSlogan: "Together, we build solutions for a better tomorrow.",
+                namePlaceholder: "Full Name",
+                emailPlaceholder: "Email",
+                passwordPlaceholder: "Password",
+                loginTitle: "Login to Your Account",
+                loginButton: "Login",
+                noAccount: "Don't have an account?",
+                signupLink: "Sign up",
+                signupTitle: "Create a New Account",
+                signupButton: "Sign Up",
+                hasAccount: "Already have an account?",
+                loginLink: "Login",
+                forgotPasswordLink: "Forgot Password?",
+                forgotPasswordTitle: "Reset Password",
+                forgotPasswordInstructions: "Enter your email and we'll send you a link to reset your password.",
+                sendResetLinkButton: "Send Reset Link",
+                resetEmailSent: "Password reset email sent! Please check your inbox and spam folder.",
+                changePasswordTitle: "Change Password",
+                currentPasswordPlaceholder: "Current Password for verification",
+                newPasswordPlaceholder: "New Password (min. 6 characters)",
+                changePasswordButton: "Update Password",
+                passwordUpdateSuccess: "Password updated successfully!",
+                passwordUpdateError: "Incorrect current password. Please try again.",
+                menuEditProfile: "Edit Profile",
+                editProfileTitle: "Edit Profile",
+                editEmailInstructions: "To change your email, please enter your current password.",
+                saveChangesButton: "Save Changes",
+                profileUpdateSuccess: "Profile updated successfully!",
+                menuHistory: "Search History",
+                menuChangePassword: "Change Password",
+                menuLogout: "Logout",
+                searchPlaceholder: "Search for a city or place...",
+                historyTitle: "Search History",
+                noHistory: "Your search history is empty.",
+                aboutTitle: "A Comprehensive Tool for Your Well-being",
+                aboutSubtitle: "We combine air quality, weather data, and personalized features to give you a complete picture of your environment.",
+                feature1Title: "Live Interactive Map",
+                feature1Desc: "Our core feature is a dynamic world map. Click anywhere to get instant, real-time Air Quality Index (AQI) data from the nearest monitoring station. Track pollution levels in your city or anywhere you plan to travel.",
+                feature2Title: "Detailed Data & Weather",
+                feature2Desc: "Beyond the AQI number, our detailed panel shows you crucial weather information like temperature, humidity, and wind speed. This helps you understand how weather conditions affect air quality.",
+                dataPanelAQI: "Air Quality Index (AQI)",
+                dataPanelTemp: "Temp",
+                dataPanelHumidity: "Humidity",
+                dataPanelWind: "Wind",
+                dataPanelHealthAdvice: "Health Advice:",
+                updatedLabel: "Updated",
+                footerText: "© 2024 All rights reserved for Digital Minds team",
+                aqiStatusGood: "Good",
+                aqiAdviceGood: "Air quality is excellent. Great day to be active outside!",
+                aqiStatusModerate: "Moderate",
+                aqiAdviceModerate: "Air quality is acceptable. Sensitive individuals may have symptoms.",
+                aqiStatusUnhealthySensitive: "Unhealthy for Sensitive",
+                aqiAdviceUnhealthySensitive: "Sensitive groups should reduce heavy exertion outdoors.",
+                aqiStatusUnhealthy: "Unhealthy",
+                aqiAdviceUnhealthy: "Everyone should reduce heavy exertion outdoors.",
+                aqiStatusVeryUnhealthy: "Very Unhealthy",
+                aqiAdviceVeryUnhealthy: "Health alert: Avoid all outdoor physical activity.",
+                aqiStatusHazardous: "Hazardous",
+                aqiAdviceHazardous: "Health warning: Everyone should stay indoors.",
+                aqiStatusNoData: "No Data",
+                aqiError: "AQI data not available for this location.",
+                fetchError: "Failed to fetch all data. Please try again.",
+                errorTitle: "Error"
+            },
+            ar: {
+                appName: "مراقب جودة الهواء",
+                navLogin: "تسجيل الدخول",
+                navSignup: "حساب جديد",
+                navHome: "الرئيسية",
+                navMap: "الخريطة",
+                navTeam: "فريقنا",
+                navSettings: "الإعدادات",
+                navLanguage: "اللغة",
+                navTheme: "المظهر",
+                navTalkback: "القراءة عند المرور",
+                heroTitle: "تنفس أنقى. عش أفضل.",
+                heroSubtitle: "دليلك الفوري لجودة الهواء الذي تتنفسه. نحن نقدم بيانات دقيقة ومباشرة لمساعدتك على اتخاذ قرارات صحية كل يوم.",
+                heroButton: "افتح الخريطة المباشرة",
+                teamTitle: "تعرف على فريقنا",
+                teamSlogan: "معًا، نبني حلولًا من أجل غد أفضل.",
+                namePlaceholder: "الاسم الكامل",
+                emailPlaceholder: "البريد الإلكتروني",
+                passwordPlaceholder: "كلمة المرور",
+                loginTitle: "تسجيل الدخول إلى حسابك",
+                loginButton: "دخول",
+                noAccount: "ليس لديك حساب؟",
+                signupLink: "أنشئ حسابًا",
+                signupTitle: "إنشاء حساب جديد",
+                signupButton: "إنشاء حساب",
+                hasAccount: "هل لديك حساب بالفعل؟",
+                loginLink: "تسجيل الدخول",
+                forgotPasswordLink: "هل نسيت كلمة المرور؟",
+                forgotPasswordTitle: "إعادة تعيين كلمة المرور",
+                forgotPasswordInstructions: "أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+                sendResetLinkButton: "أرسل رابط الاستعادة",
+                resetEmailSent: "تم إرسال بريد إعادة تعيين كلمة المرور! يرجى التحقق من بريدك الوارد ومجلد الرسائل غير المرغوب فيها (Spam).",
+                changePasswordTitle: "تغيير كلمة المرور",
+                currentPasswordPlaceholder: "كلمة المرور الحالية للتحقق",
+                newPasswordPlaceholder: "كلمة المرور الجديدة (6 أحرف على الأقل)",
+                changePasswordButton: "تحديث كلمة المرور",
+                passwordUpdateSuccess: "تم تحديث كلمة المرور بنجاح!",
+                passwordUpdateError: "كلمة المرور الحالية غير صحيحة. يرجى المحاولة مرة أخرى.",
+                menuEditProfile: "تعديل الملف الشخصي",
+                editProfileTitle: "تعديل الملف الشخصي",
+                saveChangesButton: "حفظ التغييرات",
+                profileUpdateSuccess: "تم تحديث الملف الشخصي بنجاح!",
+                menuHistory: "سجل البحث",
+                menuChangePassword: "تغيير كلمة المرور",
+                menuLogout: "تسجيل الخروج",
+                searchPlaceholder: "ابحث عن مدينة أو مكان...",
+                historyTitle: "سجل البحث",
+                noHistory: "سجل البحث الخاص بك فارغ.",
+                aboutTitle: "أداة شاملة لرفاهيتك",
+                aboutSubtitle: "نحن نجمع بين بيانات جودة الهواء والطقس والميزات المخصصة لنمنحك صورة كاملة عن بيئتك.",
+                feature1Title: "خريطة تفاعلية مباشرة",
+                feature1Desc: "ميزتنا الأساسية هي خريطة عالمية ديناميكية. انقر في أي مكان للحصول على بيانات مؤشر جودة الهواء (AQI) الفورية في الوقت الفعلي من أقرب محطة مراقبة. تتبع مستويات التلوث في مدينتك أو أي مكان تخطط للسفر إليه.",
+                feature2Title: "بيانات مفصلة والطقس",
+                feature2Desc: "إلى جانب رقم مؤشر جودة الهواء، تعرض لك لوحة البيانات التفصيلية معلومات الطقس الهامة مثل درجة الحرارة والرطوبة وسرعة الرياح. يساعدك هذا على فهم كيفية تأثير الظروف الجوية على جودة الهواء.",
+                dataPanelAQI: "مؤشر جودة الهواء",
+                dataPanelTemp: "الحرارة",
+                dataPanelHumidity: "الرطوبة",
+                dataPanelWind: "الرياح",
+                dataPanelHealthAdvice: "نصيحة صحية:",
+                updatedLabel: "آخر تحديث",
+                footerText: "© 2024 جميع الحقوق محفوظة لفريق Digital Minds",
+                aqiStatusGood: "جيد",
+                aqiAdviceGood: "جودة الهواء ممتازة. يوم رائع للنشاط في الخارج!",
+                aqiStatusModerate: "متوسط",
+                aqiAdviceModerate: "جودة الهواء مقبولة. قد يعاني الأفراد الحساسون من أعراض.",
+                aqiStatusUnhealthySensitive: "غير صحي للحساسين",
+                aqiAdviceUnhealthySensitive: "يجب على المجموعات الحساسة تقليل المجهود الشاق في الهواء الطلق.",
+                aqiStatusUnhealthy: "غير صحي",
+                aqiAdviceUnhealthy: "يجب على الجميع تقليل المجهود الشاق في الهواء الطلق.",
+                aqiStatusVeryUnhealthy: "غير صحي للغاية",
+                aqiAdviceVeryUnhealthy: "تنبيه صحي: تجنب كل الأنشطة البدنية في الهواء الطلق.",
+                aqiStatusHazardous: "خطير",
+                aqiAdviceHazardous: "تحذير صحي: يجب على الجميع البقاء في الداخل.",
+                aqiStatusNoData: "لا توجد بيانات",
+                aqiError: "بيانات جودة الهواء غير متوفرة لهذا الموقع.",
+                fetchError: "فشل جلب جميع البيانات. يرجى المحاولة مرة أخرى.",
+                errorTitle: "خطأ"
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- FIREBASE CONFIGURATION ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyBuyUNk6-0OglHwO_N7Ar2V7IR_WjAH41M",
+                authDomain: "air-quality-monitor-6717a.firebaseapp.com",
+                projectId: "air-quality-monitor-6717a",
+                storageBucket: "air-quality-monitor-6717a.appspot.com",
+                messagingSenderId: "864803225125",
+                appId: "1:864803225125:web:b058d248c460be218749cc",
+                measurementId: "G-KQFHV5T3VX"
+            };
+            
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            
+            // --- UI ELEMENTS ---
+            const landingPage = document.getElementById('landing-page');
+            const pageContent = document.getElementById('page-content');
+            const teamPage = document.getElementById('team-page');
+            const mapView = document.getElementById('map-view');
+            const mapContainer = document.getElementById('map-container');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const menuBtn = document.getElementById('menu-btn');
+            const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+            const loggedOutSidebar = document.getElementById('sidebar-auth-logged-out');
+            const loggedInSidebar = document.getElementById('sidebar-auth-logged-in');
+            const sidebarUserName = document.getElementById('sidebar-user-name');
+            const loginModal = document.getElementById('login-modal');
+            const signupModal = document.getElementById('signup-modal');
+            const passwordChangeModal = document.getElementById('password-change-modal');
+            const forgotPasswordModal = document.getElementById('forgot-password-modal');
+            const editProfileModal = document.getElementById('edit-profile-modal');
+            const historyModal = document.getElementById('history-modal');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const passwordChangeForm = document.getElementById('password-change-form');
+            const forgotPasswordForm = document.getElementById('forgot-password-form');
+            const editProfileForm = document.getElementById('edit-profile-form');
+            const historyList = document.getElementById('history-list');
+            const noHistoryMessage = document.getElementById('no-history-message');
+            const themeToggleSidebar = document.getElementById('theme-toggle-sidebar');
+            const talkbackToggle = document.getElementById('talkback-toggle');
+
+            let mapInitialized = false;
+            let map = null;
+            let speechVoices = [];
+            let isTalkbackEnabled = false;
+            let currentHighlight = null;
+            const allViews = [landingPage, mapView, pageContent];
+            const pageViews = { '#team': teamPage };
+
+            // --- TEXT-TO-SPEECH VOICE LOADER ---
+            function loadVoices() {
+                speechVoices = speechSynthesis.getVoices();
+            }
+            loadVoices();
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = loadVoices;
+            }
+
+            // --- TEAM SECTION RENDER ---
+            function renderTeam() {
+                const teamContainer = document.querySelector('#team-page .grid');
+                 if(!teamContainer) return;
+                teamContainer.innerHTML = ''; // Clear existing
+                teamMembers.forEach((member, index) => {
+                    const card = document.createElement('div');
+                    card.className = "team-card bg-gray-50 dark:bg-gray-800 p-6 rounded-lg shadow-md text-center animate-on-scroll";
+                    card.style.transitionDelay = `${index * 100}ms`;
+                    card.innerHTML = `
+                        <img src="${member.img}" onerror="this.onerror=null;this.src='https://placehold.co/100x100/E2E8F0/4A5568?text=${member.name.charAt(0)}';" alt="Photo of ${member.name}" class="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-gray-200 dark:border-gray-700 object-cover">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">${member.name}</h3>
+                        <p class="text-blue-600 dark:text-blue-400 font-semibold">${member.role}</p>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2 text-sm">${member.desc}</p>
+                    `;
+                    teamContainer.appendChild(card);
+                });
+            }
+            renderTeam();
+            
+            
+            // --- THEME/DARK MODE LOGIC ---
+            const applyTheme = (theme) => {
+                const icon = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"></svg>`;
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-7-8a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm14 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-2.929-5.071a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zm-9.142 9.142a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707.707zm9.142 0a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707zm-9.142-9.142a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>`;
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`;
+                }
+            };
+
+            const toggleTheme = () => {
+                const currentTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            };
+
+            themeToggleSidebar.addEventListener('click', toggleTheme);
+
+            const initialTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            applyTheme(initialTheme);
+            
+            // --- SECURITY HELPER ---
+            const sanitizeInput = (input) => {
+                const div = document.createElement('div');
+                div.textContent = input;
+                return div.innerHTML;
+            };
+
+            // --- LANGUAGE SWITCHER LOGIC ---
+            const setLanguage = (lang) => {
+                speechSynthesis.cancel();
+                document.documentElement.lang = lang;
+                document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                
+                const bodyClasses = ['lang-' + lang, 'text-gray-800'];
+                if(document.documentElement.classList.contains('dark')) {
+                    bodyClasses.push('dark');
+                }
+                document.body.className = bodyClasses.join(' ');
+
+                document.querySelectorAll('[data-lang-key]').forEach(element => {
+                    const key = element.getAttribute('data-lang-key');
+                    const translation = translations[lang][key];
+                    if (translation) {
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            element.setAttribute('placeholder', translation);
+                        } else {
+                            element.textContent = translation;
+                        }
+                    }
+                });
+                
+                if (map) {
+                    const geocoderControl = document.querySelector('.leaflet-control-geocoder-form input');
+                    if (geocoderControl) {
+                        geocoderControl.placeholder = translations[lang].searchPlaceholder;
+                    }
+                }
+
+                localStorage.setItem('preferredLanguage', lang);
+                updateLangButtons(lang);
+            };
+
+            const updateLangButtons = (lang) => {
+                const langEnBtnSidebar = document.getElementById('lang-en-sidebar');
+                const langArBtnSidebar = document.getElementById('lang-ar-sidebar');
+                if (lang === 'ar') {
+                    langArBtnSidebar.classList.add('bg-blue-600', 'text-white');
+                    langEnBtnSidebar.classList.remove('bg-blue-600', 'text-white');
+                } else {
+                    langEnBtnSidebar.classList.add('bg-blue-600', 'text-white');
+                    langArBtnSidebar.classList.remove('bg-blue-600', 'text-white');
+                }
+            };
+            
+            document.getElementById('lang-en-sidebar').addEventListener('click', () => setLanguage('en'));
+            document.getElementById('lang-ar-sidebar').addEventListener('click', () => setLanguage('ar'));
+            
+            const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            setLanguage(preferredLanguage);
+
+            // --- Scroll Animations ---
+            const scrollElements = document.querySelectorAll('.animate-on-scroll');
+            const elementInView = (el, offset = 0) => {
+                const elementTop = el.getBoundingClientRect().top;
+                return (
+                    elementTop <= 
+                    (window.innerHeight || document.documentElement.clientHeight) - offset
+                );
+            };
+
+            const handleScrollAnimation = () => {
+                scrollElements.forEach((el) => {
+                    if(elementInView(el, 100)) {
+                        el.classList.add('is-visible');
+                    }
+                })
+            }
+            window.addEventListener('scroll', handleScrollAnimation);
+
+
+            // --- VIEW MANAGEMENT ---
+            function showPage(hash) {
+                speechSynthesis.cancel();
+                allViews.forEach(v => v.classList.add('hidden'));
+                Object.values(pageViews).forEach(v => v.classList.add('hidden'));
+
+                if (hash === '#map' && auth.currentUser) {
+                    mapView.classList.remove('hidden');
+                    if (!mapInitialized) {
+                        initializeMapApp();
+                        mapInitialized = true;
+                    }
+                    setTimeout(() => { if (map) map.invalidateSize(); }, 0);
+                } else if (pageViews[hash]) {
+                    pageContent.classList.remove('hidden');
+                    pageViews[hash].classList.remove('hidden');
+                } else {
+                    landingPage.classList.remove('hidden');
+                }
+                window.scrollTo(0, 0);
+                setTimeout(handleScrollAnimation, 100); // Trigger animations on new page
+            }
+            
+             // --- "TALKBACK" TEXT-TO-SPEECH LOGIC ---
+            const speakText = (element) => {
+                if (!isTalkbackEnabled || !element || !element.innerText.trim()) {
+                    return;
+                }
+
+                speechSynthesis.cancel(); // Stop any previous speech
+
+                const textToRead = element.innerText;
+                const utterance = new SpeechSynthesisUtterance(textToRead);
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                const langCode = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+                const langShortCode = currentLang === 'ar' ? 'ar' : 'en';
+
+                let selectedVoice = speechVoices.find(voice => voice.lang === langCode);
+                if (!selectedVoice) {
+                    selectedVoice = speechVoices.find(voice => voice.lang.startsWith(langShortCode));
+                }
+
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                } else {
+                    utterance.lang = langCode;
+                }
+                
+                speechSynthesis.speak(utterance);
+            };
+
+            const handleMouseOver = (event) => {
+                if (!isTalkbackEnabled) return;
+                
+                const target = event.target.closest('h1, h2, h3, h4, p, a, button, [data-readable]');
+                if (target && target !== currentHighlight) {
+                     if (currentHighlight) {
+                        currentHighlight.classList.remove('talkback-highlight');
+                    }
+                    currentHighlight = target;
+                    currentHighlight.classList.add('talkback-highlight');
+                    speakText(target);
+                }
+            };
+
+            const handleMouseOut = (event) => {
+                if (currentHighlight) {
+                    currentHighlight.classList.remove('talkback-highlight');
+                    currentHighlight = null;
+                    speechSynthesis.cancel();
+                }
+            };
+
+            talkbackToggle.addEventListener('change', () => {
+                isTalkbackEnabled = talkbackToggle.checked;
+                if(isTalkbackEnabled) {
+                    document.body.addEventListener('mouseover', handleMouseOver);
+                    document.body.addEventListener('mouseout', handleMouseOut);
+                } else {
+                    document.body.removeEventListener('mouseover', handleMouseOver);
+                    document.body.removeEventListener('mouseout', handleMouseOut);
+                    speechSynthesis.cancel();
+                     if (currentHighlight) {
+                        currentHighlight.classList.remove('talkback-highlight');
+                        currentHighlight = null;
+                    }
+                }
+            });
+
+
+            // --- AUTHENTICATION STATE OBSERVER ---
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    loggedInSidebar.classList.remove('hidden');
+                    loggedOutSidebar.classList.add('hidden');
+                    sidebarUserName.textContent = user.displayName || user.email;
+                } else {
+                    loggedOutSidebar.classList.remove('hidden');
+                    loggedInSidebar.classList.add('hidden');
+                    sidebarUserName.textContent = '';
+                }
+                showPage(window.location.hash);
+            });
+            
+            document.getElementById('launch-map-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (auth.currentUser) {
+                    window.location.hash = '#map';
+                } else {
+                    loginModal.classList.remove('hidden');
+                }
+            });
+            document.getElementById('home-logo-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.hash = '';
+            });
+            
+            window.addEventListener('hashchange', () => showPage(window.location.hash));
+            showPage(window.location.hash); // Initial load
+
+
+            // --- MODAL AND FORM HANDLING ---
+            document.getElementById('login-btn-sidebar').addEventListener('click', () => { closeSidebar(); loginModal.classList.remove('hidden'); });
+            document.getElementById('signup-btn-sidebar').addEventListener('click', () => { closeSidebar(); signupModal.classList.remove('hidden'); });
+            document.getElementById('change-password-btn-sidebar').addEventListener('click', (e) => { e.preventDefault(); closeSidebar(); passwordChangeModal.classList.remove('hidden'); });
+            document.getElementById('edit-profile-btn-sidebar').addEventListener('click', (e) => { 
+                e.preventDefault();
+                const user = auth.currentUser;
+                if (user) {
+                    document.getElementById('edit-name').value = user.displayName || '';
+                    document.getElementById('edit-email').value = user.email || '';
+                }
+                closeSidebar();
+                editProfileModal.classList.remove('hidden'); 
+            });
+            document.getElementById('history-btn-sidebar').addEventListener('click', (e) => { 
+                e.preventDefault();
+                closeSidebar();
+                displaySearchHistory();
+                historyModal.classList.remove('hidden'); 
+            });
+            document.getElementById('logout-btn-sidebar').addEventListener('click', (e) => {
+                e.preventDefault();
+                signOut(auth);
+                closeSidebar();
+            });
+
+            
+            const closeAllModals = () => {
+                document.querySelectorAll('#auth-modals > div').forEach(modal => modal.classList.add('hidden'));
+                const feedbackElements = document.querySelectorAll('#login-error, #signup-error, #password-change-feedback, #forgot-password-feedback, #edit-profile-feedback');
+                feedbackElements.forEach(el => el.textContent = '');
+            };
+
+            document.getElementById('close-login-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-signup-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-password-change-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-forgot-password-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-edit-profile-modal').addEventListener('click', closeAllModals);
+            document.getElementById('close-history-modal').addEventListener('click', closeAllModals);
+            
+            document.getElementById('show-signup').addEventListener('click', (e) => { e.preventDefault(); loginModal.classList.add('hidden'); signupModal.classList.remove('hidden'); });
+            document.getElementById('show-login').addEventListener('click', (e) => { e.preventDefault(); signupModal.classList.add('hidden'); loginModal.classList.remove('hidden'); });
+
+             // Sidebar Toggle
+            const closeSidebar = () => document.body.classList.remove('sidebar-open');
+            menuBtn.addEventListener('click', () => document.body.classList.add('sidebar-open'));
+            closeSidebarBtn.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', closeSidebar);
+            });
+
+
+            // --- FIREBASE AUTH ACTIONS ---
+            signupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('signup-name').value;
+                const email = document.getElementById('signup-email').value;
+                const password = document.getElementById('signup-password').value;
+                
+                const sanitizedName = sanitizeInput(name);
+                if (name !== sanitizedName) {
+                    document.getElementById('signup-error').textContent = "Invalid characters in name.";
+                    return;
+                }
+
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        return updateProfile(userCredential.user, { displayName: sanitizedName });
+                    })
+                    .then(() => {
+                        closeAllModals();
+                        signupForm.reset();
+                    })
+                    .catch(error => { document.getElementById('signup-error').textContent = error.message; });
+            });
+
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => { closeAllModals(); loginForm.reset(); })
+                    .catch(error => { document.getElementById('login-error').textContent = error.message; });
+            });
+
+            passwordChangeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const user = auth.currentUser;
+                const feedbackEl = document.getElementById('password-change-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+
+                if (!user) return;
+                
+                const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+                reauthenticateWithCredential(user, credential).then(() => {
+                    return updatePassword(user, newPassword);
+                }).then(() => {
+                    feedbackEl.textContent = translations[currentLang].passwordUpdateSuccess;
+                    feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                    passwordChangeForm.reset();
+                    setTimeout(() => { closeAllModals(); }, 2000);
+                }).catch((error) => {
+                    if (error.code === 'auth/wrong-password') {
+                        feedbackEl.textContent = translations[currentLang].passwordUpdateError;
+                    } else {
+                        feedbackEl.textContent = error.message;
+                    }
+                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                });
+            });
+
+            forgotPasswordForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgot-email').value;
+                const feedbackEl = document.getElementById('forgot-password-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        feedbackEl.textContent = translations[currentLang].resetEmailSent;
+                        feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                        forgotPasswordForm.reset();
+                         setTimeout(() => { closeAllModals(); }, 3000);
+                    })
+                    .catch((error) => {
+                        feedbackEl.textContent = error.message;
+                        feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                    });
+            });
+
+            editProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('edit-name').value;
+                const newEmail = document.getElementById('edit-email').value;
+                const password = document.getElementById('edit-password-verify').value;
+                const user = auth.currentUser;
+                const feedbackEl = document.getElementById('edit-profile-feedback');
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                const submitBtn = editProfileForm.querySelector('button[type="submit"]');
+
+                const sanitizedName = sanitizeInput(newName);
+                if (newName !== sanitizedName) {
+                    feedbackEl.textContent = "Invalid characters in name.";
+                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                    return;
+                }
+
+                if (!user) return;
+                
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<div class="loader" style="border-top-color: white; width: 20px; height: 20px; margin: auto; border-width: 2px;"></div>`;
+
+                try {
+                    const nameChanged = sanitizedName !== user.displayName;
+                    if (nameChanged) {
+                        await updateProfile(user, { displayName: sanitizedName });
+                    }
+
+                    const emailChanged = newEmail !== user.email;
+                    if (emailChanged) {
+                        if (!password) throw new Error("Password is required to change email.");
+                        const credential = EmailAuthProvider.credential(user.email, password);
+                        await reauthenticateWithCredential(user, credential);
+                        await updateEmail(user, newEmail);
+                    }
+                    
+                    if (nameChanged || emailChanged) {
+                        feedbackEl.textContent = translations[currentLang].profileUpdateSuccess;
+                        feedbackEl.className = "text-green-500 text-sm mt-4 text-center";
+                    }
+
+                    setTimeout(() => { closeAllModals(); }, 2000);
+
+                } catch (error) {
+                     if (error.code === 'auth/wrong-password') {
+                        feedbackEl.textContent = translations[currentLang].passwordUpdateError;
+                    } else {
+                        feedbackEl.textContent = error.message;
+                    }
+                    feedbackEl.className = "text-red-500 text-sm mt-4 text-center";
+                } finally {
+                     submitBtn.disabled = false;
+                     submitBtn.textContent = translations[currentLang].saveChangesButton;
+                }
+            });
+
+
+            // --- HISTORY LOGIC (FIRESTORE) ---
+            const saveSearchToHistory = (locationData) => {
+                const user = auth.currentUser;
+                if (!user) return;
+                
+                const historyRef = collection(db, 'users', user.uid, 'history');
+                addDoc(historyRef, {
+                    name: locationData.name,
+                    lat: locationData.lat,
+                    lng: locationData.lng,
+                    timestamp: serverTimestamp()
+                }).catch(error => console.error("Error adding document: ", error));
+            };
+
+            const displaySearchHistory = async () => {
+                const user = auth.currentUser;
+                if (!user) return;
+
+                historyList.innerHTML = '<div class="flex justify-center items-center h-48"><div class="loader"></div></div>';
+                noHistoryMessage.classList.add('hidden');
+
+                const historyRef = collection(db, 'users', user.uid, 'history');
+                const q = query(historyRef, orderBy('timestamp', 'desc'), limit(20));
+                
+                try {
+                    const snapshot = await getDocs(q);
+                    historyList.innerHTML = '';
+                    if (snapshot.empty) {
+                        noHistoryMessage.classList.remove('hidden');
+                    } else {
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const li = document.createElement('li');
+                            li.className = 'p-3 border-b';
+                            li.innerHTML = `
+                                <p class="font-semibold">${data.name}</p>
+                                <p class="text-sm text-gray-500">Searched on: ${data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : 'N/A'}</p>
+                            `;
+                            li.addEventListener('click', () => {
+                                closeAllModals();
+                                if(window.location.hash !== '#map') window.location.hash = '#map';
+                                setTimeout(() => {
+                                    map.setView([data.lat, data.lng], 13);
+                                    fetchAllDataForLocation(data.lat, data.lng);
+                                }, 100);
+                            });
+                            historyList.appendChild(li);
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error getting history: ", error);
+                    historyList.innerHTML = `<p class="text-red-500 text-center">Could not load history.</p>`;
+                }
+            };
+
+            // --- MAP APPLICATION LOGIC (INITIALIZED ON DEMAND) ---
+            function initializeMapApp() {
+                // API KEYS
+                const WAQI_API_KEY = "928a43b09b68edba7abf27fda1fa9a9a754fd8c0";
+                const OPENWEATHER_API_KEY = "8e8cc4c4a2a0e8af0a9a96d4d0277b58";
+                
+                let currentCityData = {}; 
+
+                // Inject map UI elements
+                mapContainer.innerHTML = `
+                    <div id="map"></div>
+                    <button id="locate-btn" class="absolute bottom-4 left-4 z-[1000] bg-white p-3 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Find my location">
+                        <svg id="locate-icon" xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" class="text-gray-600"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+                    </button>
+                    <div id="data-panel" class="absolute top-[100px] sm:top-24 left-2 right-2 sm:left-auto sm:right-4 sm:w-80 z-[1000] bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-lg hidden" data-readable="true">
+                        <div id="loading" class="flex justify-center items-center h-48"><div class="loader"></div></div>
+                        <div id="data-content" class="hidden">
+                            <button id="close-panel-btn" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 z-10 p-1 rounded-full hover:bg-gray-100"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg></button>
+                            <h2 id="city-name" class="text-xl font-bold text-gray-800 pr-6">...</h2>
+                            <p id="update-time" class="text-xs text-gray-500">...</p>
+                            <hr class="my-3">
+                            <div class="text-center">
+                                <p class="text-sm text-gray-600" data-lang-key="dataPanelAQI">Air Quality Index (AQI)</p>
+                                <div id="aqi-value" class="text-6xl font-bold my-2 text-gray-700">--</div>
+                                <div id="aqi-status" class="px-3 py-1 text-white rounded-full text-sm inline-block bg-gray-400">...</div>
+                            </div>
+                            <div id="weather-animation-container" class="relative h-24 my-2 overflow-hidden rounded-lg">
+                                <div id="weather-animation"></div>
+                            </div>
+                            <p id="weather-description" class="text-center text-lg capitalize mb-2"></p>
+                            <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelTemp">Temp</p><p id="temp-value" class="font-bold text-lg">--°C</p></div>
+                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelHumidity">Humidity</p><p id="humidity-value" class="font-bold text-lg">--%</p></div>
+                                <div><p class="text-xs text-gray-500" data-lang-key="dataPanelWind">Wind</p><p id="wind-value" class="font-bold text-lg">-- km/h</p></div>
+                            </div>
+                            <div class="mt-4 bg-gray-100 p-2 rounded-lg">
+                                <h4 class="font-bold text-sm" data-lang-key="dataPanelHealthAdvice">Health Advice:</h4>
+                                <p id="forecast-text" class="text-xs text-gray-700">Analyzing data...</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Map UI element references
+                const dataPanel = document.getElementById('data-panel');
+                const loadingDiv = document.getElementById('loading');
+                const dataContentDiv = document.getElementById('data-content');
+                const cityNameEl = document.getElementById('city-name');
+                const updateTimeEl = document.getElementById('update-time');
+                const aqiValueEl = document.getElementById('aqi-value');
+                const aqiStatusEl = document.getElementById('aqi-status');
+                const weatherAnimationEl = document.getElementById('weather-animation');
+                const weatherDescriptionEl = document.getElementById('weather-description');
+                const tempValueEl = document.getElementById('temp-value');
+                const humidityValueEl = document.getElementById('humidity-value');
+                const windValueEl = document.getElementById('wind-value');
+                const forecastTextEl = document.getElementById('forecast-text');
+                
+                // Map Initialization
+                map = L.map('map').setView([26.8206, 30.8025], 6); 
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                let marker = L.marker([26.8206, 30.8025], { opacity: 0 }).addTo(map);
+
+                const currentMapLang = localStorage.getItem('preferredLanguage') || 'en';
+                L.Control.geocoder({
+                    defaultMarkGeocode: false,
+                    placeholder: translations[currentMapLang].searchPlaceholder,
+                    geocoder: L.Control.Geocoder.nominatim({
+                        geocodingQueryParams: { "accept-language": "ar,en" } 
+                    })
+                }).on('markgeocode', function(e) {
+                    const { center, name } = e.geocode;
+                    map.setView(center, 13);
+                    saveSearchToHistory({name: name, lat: center.lat, lng: center.lng});
+                    marker.setLatLng(center).setOpacity(1);
+                    fetchAllDataForLocation(center.lat, center.lng);
+                }).addTo(map);
+
+                // --- DATA FETCHING & UI LOGIC ---
+                const fetchAllDataForLocation = async (lat, lng) => {
+                    speechSynthesis.cancel();
+                    dataPanel.classList.remove('hidden');
+                    loadingDiv.classList.remove('hidden');
+                    dataContentDiv.classList.add('hidden');
+                    
+                    const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+
+                    const results = await Promise.allSettled([
+                        fetchAqiData(lat, lng), 
+                        fetchWeatherData(lat, lng, currentLang)
+                    ]);
+
+                    const aqiResult = results[0];
+                    const weatherResult = results[1];
+
+                    const aqiData = aqiResult.status === 'fulfilled' ? aqiResult.value : null;
+                    const weatherData = weatherResult.status === 'fulfilled' ? weatherResult.value : null;
+
+                    if (aqiResult.status === 'rejected') console.error("AQI Fetch Error:", aqiResult.reason);
+                    if (weatherResult.status === 'rejected') console.error("Weather Fetch Error:", weatherResult.reason);
+                    
+                    if (!aqiData && !weatherData) {
+                        handleError(translations[currentLang].fetchError);
+                    } else {
+                        updateUIPanel({ aqiData, weatherData, lat, lng });
+                    }
+                };
+                
+                const fetchAqiData = async (lat, lng) => {
+                    const url = `https://api.waqi.info/feed/geo:${lat};${lng}/?token=${WAQI_API_KEY}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Could not fetch AQI data.');
+                    const data = await response.json();
+                    if (data.status !== "ok") throw new Error(data.data || 'No station found.');
+                    return data.data;
+                };
+
+                const fetchWeatherData = async (lat, lng, lang) => {
+                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OPENWEATHER_API_KEY}&units=metric&lang=${lang}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Could not fetch weather data.');
+                    return await response.json();
+                };
+
+                const updateWeatherAnimation = (weatherId) => {
+                    weatherAnimationEl.innerHTML = ''; // Clear previous animation
+                    if (weatherId === 800) { // Clear
+                        weatherAnimationEl.innerHTML = '<div class="sun"></div>';
+                    } else if (weatherId >= 801 && weatherId <= 804) { // Clouds
+                        weatherAnimationEl.innerHTML = '<div class="cloud"></div><div class="cloud c2"></div>';
+                    } else if ((weatherId >= 300 && weatherId <= 321) || (weatherId >= 500 && weatherId <= 531)) { // Drizzle & Rain
+                        let rainHTML = '<div class="cloud"></div><div class="rain">';
+                        for(let i=0; i<20; i++) {
+                            const left = Math.random() * 100;
+                            const delay = Math.random() * 2;
+                            rainHTML += `<div style="left: ${left}%; animation-delay: ${delay}s;"></div>`;
+                        }
+                        rainHTML += '</div>';
+                        weatherAnimationEl.innerHTML = rainHTML;
+                    } else if (weatherId >= 200 && weatherId <= 232) { // Thunderstorm
+                         let rainHTML = '<div class="cloud" style="background: #888;"></div><div class="thunder"></div><div class="rain">';
+                        for(let i=0; i<20; i++) {
+                            const left = Math.random() * 100;
+                            const delay = Math.random() * 2;
+                            rainHTML += `<div style="left: ${left}%; animation-delay: ${delay}s;"></div>`;
+                        }
+                        rainHTML += '</div>';
+                        weatherAnimationEl.innerHTML = rainHTML;
+                    } else if (weatherId >= 600 && weatherId <= 622) { // Snow
+                        let snowHTML = '<div class="cloud"></div><div class="snow">';
+                        for(let i=0; i<20; i++) {
+                            const left = Math.random() * 100;
+                            const delay = Math.random() * 5;
+                             const duration = (Math.random() * 3) + 4; // 4 to 7 seconds
+                            snowHTML += `<div style="left: ${left}%; animation-delay: ${delay}s; animation-duration: ${duration}s;"></div>`;
+                        }
+                        snowHTML += '</div>';
+                        weatherAnimationEl.innerHTML = snowHTML;
+                    } else if (weatherId >= 701 && weatherId <= 781) { // Mist, Fog, etc.
+                        weatherAnimationEl.innerHTML = '<div class="mist"><div class="m1"></div><div class="m2"></div></div>';
+                    } else {
+                         weatherAnimationEl.innerHTML = '<div class="cloud"></div>'; // Default to cloudy
+                    }
+                };
+                
+                const getAqiStatus = (aqi) => {
+                     if (aqi <= 50) return { statusKey: "aqiStatusGood", adviceKey: "aqiAdviceGood", color: "#22c55e" };
+                     if (aqi <= 100) return { statusKey: "aqiStatusModerate", adviceKey: "aqiAdviceModerate", color: "#facc15" };
+                     if (aqi <= 150) return { statusKey: "aqiStatusUnhealthySensitive", adviceKey: "aqiAdviceUnhealthySensitive", color: "#f97316" };
+                     if (aqi <= 200) return { statusKey: "aqiStatusUnhealthy", adviceKey: "aqiAdviceUnhealthy", color: "#ef4444" };
+                     if (aqi <= 300) return { statusKey: "aqiStatusVeryUnhealthy", adviceKey: "aqiAdviceVeryUnhealthy", color: "#a855f7" };
+                     return { statusKey: "aqiStatusHazardous", adviceKey: "aqiAdviceHazardous", color: "#7f1d1d" };
+                };
+
+                const updateUIPanel = ({ aqiData, weatherData, lat, lng }) => {
+                    const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                    
+                    cityNameEl.textContent = weatherData?.name || aqiData?.city?.name || 'Unknown Location';
+
+                    if (aqiData && aqiData.time) {
+                        currentCityData = { name: weatherData?.name || aqiData.city.name, lat, lng };
+                        
+                        const locale = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+                        const localizedDate = new Date(aqiData.time.s).toLocaleString(locale, { 
+                            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                        });
+                        updateTimeEl.textContent = `${translations[currentLang].updatedLabel}: ${localizedDate}`;
+                        
+                        aqiValueEl.textContent = aqiData.aqi;
+                        const { statusKey, adviceKey, color } = getAqiStatus(aqiData.aqi);
+                        aqiStatusEl.textContent = translations[currentLang][statusKey];
+                        aqiStatusEl.style.backgroundColor = color;
+                        forecastTextEl.textContent = translations[currentLang][adviceKey];
+                    } else {
+                        handleError(translations[currentLang].aqiError);
+                    }
+
+                    if (weatherData && weatherData.weather) {
+                        updateWeatherAnimation(weatherData.weather[0].id);
+                        weatherDescriptionEl.textContent = weatherData.weather[0].description;
+                    }
+
+                    if (weatherData && weatherData.main) {
+                        tempValueEl.textContent = `${Math.round(weatherData.main.temp)}°C`;
+                        humidityValueEl.textContent = `${weatherData.main.humidity}%`;
+                        windValueEl.textContent = `${Math.round(weatherData.wind.speed * 3.6)} km/h`;
+                    }
+                    loadingDiv.classList.add('hidden');
+                    dataContentDiv.classList.remove('hidden');
+                };
+                
+                const handleError = (message) => {
+                    const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                    cityNameEl.textContent = translations[currentLang].errorTitle;
+                    updateTimeEl.textContent = "";
+                    aqiValueEl.textContent = "N/A";
+                    aqiStatusEl.textContent = translations[currentLang].aqiStatusNoData;
+                    aqiStatusEl.style.backgroundColor = "#9ca3af";
+                    forecastTextEl.textContent = message;
+                    weatherDescriptionEl.textContent = "";
+                    weatherAnimationEl.innerHTML = "";
+                    loadingDiv.classList.add('hidden');
+                    dataContentDiv.classList.remove('hidden');
+                };
+
+                map.on('click', function(e) {
+                    const { lat, lng } = e.latlng;
+                    marker.setLatLng(e.latlng).setOpacity(1);
+                    fetchAllDataForLocation(lat, lng);
+                    const geocoder = L.Control.Geocoder.nominatim();
+                    geocoder.reverse(e.latlng, map.options.crs.scale(map.getZoom()), (results) => {
+                        if (results && results.length > 0) {
+                            saveSearchToHistory({ name: results[0].name, lat, lng });
+                        }
+                    });
+                });
+                
+                document.getElementById('close-panel-btn').addEventListener('click', () => {
+                    speechSynthesis.cancel();
+                    dataPanel.classList.add('hidden');
+                });
+                document.getElementById('locate-btn').addEventListener('click', () => map.locate({setView: true, maxZoom: 13}));
+                map.on('locationfound', (e) => {
+                    marker.setLatLng(e.latlng).setOpacity(1);
+                    fetchAllDataForLocation(e.latlng.lat, e.latlng.lng);
+                });
+                map.on('locationerror', (e) => console.error("Location Error: ", e.message));
+            }
+        });
+    </script>
+</body>
+</html>
