@@ -71,15 +71,6 @@
             left: 1rem;
         }
 
-        /* RTL Overrides for Header */
-        html[dir="rtl"] header nav {
-            flex-direction: row-reverse;
-        }
-        /* Reverses the spacing between logo icon and text in RTL */
-        html[dir="rtl"] #home-logo-link.space-x-2 > :not([hidden]) ~ :not([hidden]) {
-            --tw-space-x-reverse: 1;
-        }
-
         /* --- Dark Mode Styles --- */
         .dark body { background-color: #0f172a; color: #e2e8f0; }
         .dark .bg-white { background-color: #1e293b; }
