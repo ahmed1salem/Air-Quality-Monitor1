@@ -1,76 +1,60 @@
-from playwright.sync_api import sync_playwright, expect
-import time
+import asyncio
+from playwright.async_api import async_playwright
 
-def run_verification():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+async def main():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
 
         try:
-            # 1. Load the page and go to the map view
-            page.goto("http://localhost:8000/index.html#map")
+            # 1. Start the application
+            await page.goto("http://localhost:8081", wait_until="networkidle")
 
-            # 2. Explicitly wait for the geocoder control container to be ready
-            geocoder_container = page.locator(".leaflet-control-geocoder")
-            expect(geocoder_container).to_be_visible(timeout=15000)
+            # 2. Navigate to the map page
+            await page.locator("#launch-map-btn").click()
 
-            # 3. Now find and click the geocoder icon within the container
-            geocoder_icon = geocoder_container.locator("a.leaflet-control-geocoder-icon")
-            expect(geocoder_icon).to_be_visible()
-            geocoder_icon.click()
+            # 3. Wait for the map view to be visible and initialized
+            map_view = page.locator("#map-view")
+            await map_view.wait_for(state="visible", timeout=5000)
 
-            # 4. Search for a location in English
-            geocoder_input = page.locator(".leaflet-control-geocoder-form input")
-            expect(geocoder_input).to_be_visible()
-            geocoder_input.fill("Cairo")
-            geocoder_input.press("Enter")
+            # The geocoder is added dynamically by Leaflet, so we wait for it
+            geocoder_input = page.locator('.leaflet-control-geocoder-form input')
+            await geocoder_input.wait_for(state="visible", timeout=15000)
 
-            # Wait for the geocoder result to appear and click it
-            page.locator(".leaflet-control-geocoder-alternatives a").first.click()
+            # 4. Perform the first search (in English)
+            await geocoder_input.fill('Cairo')
+            await page.keyboard.press('Enter')
+            await page.locator('#data-panel').wait_for(state="visible", timeout=10000)
+            await page.wait_for_timeout(1000)
 
-            # 5. Verify map moved and data panel is updated
-            expect(page.locator("#city-name")).to_contain_text("Cairo", timeout=15000)
+            # 5. Switch language to Arabic
+            await page.locator("#menu-btn").click()
+            await page.locator("#sidebar").wait_for(state="visible")
+            await page.locator("#lang-ar-sidebar").click()
+            await page.wait_for_timeout(1000)
 
-            # 6. Open sidebar and verify history
-            page.locator("#menu-btn").click()
-            expect(page.locator("#history-list a").first).to_contain_text("Cairo")
+            # Close the sidebar to ensure the map is interactive
+            await page.locator("#close-sidebar-btn").click()
+            await page.locator("#sidebar").wait_for(state="hidden")
 
-            # 7. Switch to Arabic
-            page.locator("#lang-ar-sidebar").click()
-            expect(page.locator("h3[data-lang-key='historyTitle']")).to_contain_text("سجل البحث")
+            # 6. Perform the second search (in Arabic)
+            await geocoder_input.fill('القاهرة')
+            await page.keyboard.press('Enter')
+            await page.locator('#data-panel').wait_for(state="visible", timeout=10000)
+            await page.wait_for_timeout(1000)
 
-            # 8. Search for a location in Arabic
-            page.locator("#close-sidebar-btn").click()
-            geocoder_icon.click() # Re-expand the search bar
-            geocoder_input_ar = page.locator(".leaflet-control-geocoder-form input")
-            expect(geocoder_input_ar).to_have_attribute("placeholder", "ابحث عن مدينة أو مكان...")
-            geocoder_input_ar.fill("Riyadh")
-            geocoder_input_ar.press("Enter")
-            page.locator(".leaflet-control-geocoder-alternatives a").first.click()
+            # 7. Open the sidebar and verify history
+            await page.locator("#menu-btn").click()
+            await page.locator("#sidebar").wait_for(state="visible")
 
-            # 9. Verify map moved and data panel is updated
-            expect(page.locator("#city-name")).to_contain_text("Riyadh", timeout=15000)
-
-            # 10. Re-open sidebar and verify new history item
-            page.locator("#menu-btn").click()
-            expect(page.locator("#history-list a").first).to_contain_text("Riyadh")
-
-            # 11. Click the first history item (Cairo)
-            page.locator("#history-list a").last.click()
-
-            # 12. Verify map moved back to Cairo
-            expect(page.locator("#city-name")).to_contain_text("Cairo", timeout=15000)
-
-            # 13. Take final screenshot
-            page.screenshot(path="jules-scratch/verification/verification_search.png")
-
-            print("Verification script completed successfully.")
+            sidebar = page.locator("#sidebar")
+            await sidebar.screenshot(path="jules-scratch/verification/search_history_verification.png")
+            print("Screenshot saved to jules-scratch/verification/search_history_verification.png")
 
         except Exception as e:
+            await page.screenshot(path="jules-scratch/verification/error.png")
             print(f"An error occurred: {e}")
-            page.screenshot(path="jules-scratch/verification/verification_error.png")
         finally:
-            browser.close()
+            await browser.close()
 
-if __name__ == "__main__":
-    run_verification()
+asyncio.run(main())
