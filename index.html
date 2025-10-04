@@ -1134,11 +1134,7 @@
                 const currentMapLang = localStorage.getItem('preferredLanguage') || 'en';
                 L.Control.geocoder({
                     defaultMarkGeocode: false,
-                    placeholder: translations[currentMapLang].searchPlaceholder,
-                    collapsed: false, // Keep the search bar expanded
-                    geocoder: L.Control.Geocoder.nominatim({
-                        geocodingQueryParams: { "accept-language": "ar,en" }
-                    })
+                    placeholder: translations[currentMapLang].searchPlaceholder
                 }).on('markgeocode', function(e) {
                     const { center, name } = e.geocode;
                     map.setView(center, 13);
