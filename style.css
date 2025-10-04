@@ -90,6 +90,7 @@ body {
 }
 .shooting-star {
     position: absolute;
+    left: -150px;
     width: 150px;
     height: 2px;
     background: linear-gradient(to right, #fff, transparent);
@@ -98,12 +99,8 @@ body {
     animation-iteration-count: infinite;
 }
 @keyframes shoot {
-    from {
-        transform: translateX(-150px);
-    }
-    to {
-        transform: translateX(100vw);
-    }
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(100vw + 300px)); }
 }
 
 /* From Uiverse.io by Lakshay-art */
