@@ -1135,8 +1135,9 @@
                 L.Control.geocoder({
                     defaultMarkGeocode: false,
                     placeholder: translations[currentMapLang].searchPlaceholder,
+                    collapsed: false, // Keep the search bar expanded
                     geocoder: L.Control.Geocoder.nominatim({
-                        geocodingQueryParams: { "accept-language": "ar,en" } 
+                        geocodingQueryParams: { "accept-language": "ar,en" }
                     })
                 }).on('markgeocode', function(e) {
                     const { center, name } = e.geocode;
