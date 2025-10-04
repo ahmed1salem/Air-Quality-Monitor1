@@ -771,6 +771,13 @@
                     <input type="checkbox" id="talkback-toggle" class="form-checkbox h-5 w-5 text-indigo-500 bg-gray-700 border-gray-600 rounded">
                 </div>
             </div>
+            <hr class="border-gray-700 my-4">
+            <div class="space-y-2">
+                <h3 class="font-bold text-lg text-white" data-lang-key="historyTitle">Search History</h3>
+                <div id="history-list" class="space-y-1 max-h-32 overflow-y-auto text-sm">
+                    <!-- History items will be injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1276,6 +1283,57 @@
             const allViews = [landingPage, mapView, pageContent];
             const pageViews = {}; // Team page is now on landing page
             const landingPageAnchors = ['#mission', '#aqi-guide', '#about-features', '#team'];
+            const historyList = document.getElementById('history-list');
+
+            // --- SEARCH HISTORY LOGIC ---
+            let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+
+            function renderSearchHistory() {
+                if (!historyList) return;
+                historyList.innerHTML = '';
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+
+                if (searchHistory.length === 0) {
+                    const noHistoryEl = document.createElement('p');
+                    noHistoryEl.className = 'text-gray-400 italic text-xs';
+                    noHistoryEl.setAttribute('data-lang-key', 'noHistory');
+                    noHistoryEl.textContent = translations[currentLang].noHistory;
+                    historyList.appendChild(noHistoryEl);
+                    return;
+                }
+
+                searchHistory.slice().reverse().forEach(item => { // Show history, newest first
+                    const historyItem = document.createElement('a');
+                    historyItem.href = '#map';
+                    historyItem.className = 'block text-gray-400 hover:text-indigo-300 truncate p-1 rounded hover:bg-gray-700/50 cursor-pointer';
+                    historyItem.textContent = item.name;
+                    historyItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        window.location.hash = '#map';
+                        setTimeout(() => {
+                            if (map) {
+                                map.setView([item.lat, item.lng], 13);
+                                fetchAllDataForLocation(item.lat, item.lng);
+                            }
+                        }, 100);
+                        closeSidebar();
+                    });
+                    historyList.appendChild(historyItem);
+                });
+            }
+
+            function saveSearchToHistory(searchItem) {
+                const existingIndex = searchHistory.findIndex(item => item.name.toLowerCase() === searchItem.name.toLowerCase());
+                if (existingIndex > -1) {
+                    searchHistory.splice(existingIndex, 1);
+                }
+                searchHistory.push(searchItem);
+                if(searchHistory.length > 10) {
+                    searchHistory.shift();
+                }
+                localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+                renderSearchHistory();
+            }
 
             // --- AI CHAT LOGIC ---
             const openAiModal = () => {
@@ -1525,6 +1583,7 @@
                 }
                 
                 renderAqiGuide(); // Re-render AQI guide with new language
+                renderSearchHistory(); // Re-render search history with new language
                 localStorage.setItem('preferredLanguage', lang);
                 updateLangButtons(lang);
             };
@@ -1546,6 +1605,7 @@
             
             const preferredLanguage = localStorage.getItem('preferredLanguage') || 'en';
             setLanguage(preferredLanguage);
+            renderSearchHistory();
 
             // --- Scroll Animations ---
             const scrollElements = document.querySelectorAll('.animate-on-scroll');
@@ -1772,6 +1832,7 @@
                     map.setView(center, 13);
                     marker.setLatLng(center).setOpacity(1);
                     fetchAllDataForLocation(center.lat, center.lng);
+                    saveSearchToHistory({ name: name, lat: center.lat, lng: center.lng });
                 }).addTo(map);
 
                 // --- DATA FETCHING & UI LOGIC ---
@@ -1929,8 +1990,8 @@
                     fetchAllDataForLocation(lat, lng);
                     const geocoder = L.Control.Geocoder.nominatim();
                     geocoder.reverse(e.latlng, map.options.crs.scale(map.getZoom()), (results) => {
-                        if (results && results.length > 0) {
-                            saveSearchToHistory({ name: results[0].name, lat, lng });
+                        if (results && results.length > 0 && results[0].name) {
+                            saveSearchToHistory({ name: results[0].name, lat: lat, lng: lng });
                         }
                     });
                 });
