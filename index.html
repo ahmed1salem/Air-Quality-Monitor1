@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Content Security Policy (CSP) for enhanced security -->
     <meta http-equiv="Content-Security-Policy"  
           content="default-src 'self'; 
                    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com;
@@ -13,16 +12,14 @@
                    img-src 'self' https: data: blob: https://raw.githubusercontent.com https://placehold.co https://i.ibb.co https://images.unsplash.com;
                    connect-src 'self' https://api.waqi.info https://api.openweathermap.org https://api.openaq.org https://gibs.earthdata.nasa.gov https://generativelanguage.googleapis.com;">
 
-    <title>Air Quality Monitor - Live AQI & Pollution Map by Digital Minds</title>
+    <title>Air Quality Monitor (AQM) - Live AQI & Pollution Map by Digital Minds</title>
     <meta name="description" content="Track real-time air quality and weather levels anywhere in the world. Get live AQI data, weather updates, and health recommendations with our interactive map, developed by the Digital Minds team.">
     <meta name="keywords" content="air quality, aqi, pollution, live map, air quality index, weather, real-time data, digital minds, web developer, portfolio">
     <meta name="author" content="Digital Minds">
     <link rel="canonical" href="https://air-quality-monitor-3.netlify.app" />
 
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjk7K0IOVXn7WvuM8wl4rXWpCAvvMG8mUjenuSlZsBh6iUeoH8SlHd-dzzCdnIoSxHr6atY7R8fQKji1gIeZ282QhKL-QbXSEUaayoYuxFdtWtogbLhcBOwBAKWuKcolUYEzDxDd8xkgjP-ZSIsIS1DsSx_50DhHDoUp8LVN1hDsy-jHCJxn4vbPnoKnYE/s1260/favicon.png">
     
-    <!-- Tailwind CSS, Google Fonts, LeafletJS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,19 +33,16 @@
 <body class="text-gray-200">
 
     
-    <!-- Sidebar -->
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none"></div>
     <div id="sidebar" class="fixed top-0 left-0 h-full w-64 glass-panel z-40 transform -translate-x-full p-6">
         <button id="close-sidebar-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
         <div class="mt-8 space-y-4">
-            <!-- Navigation Links -->
             <a href="#" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navHome">Home</a>
             <a href="#mission" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navMission">Our Mission</a>
             <a href="#aqi-guide" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navAqiGuide">AQI Guide</a>
             <a href="#map" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navMap">Map</a>
             <a href="#team" class="sidebar-link block py-2 text-gray-300 hover:text-indigo-400" data-lang-key="navTeam">Our Team</a>
             <hr class="border-gray-700">
-            <!-- Settings -->
             <div class="space-y-4">
                 <h3 class="font-bold text-lg text-white" data-lang-key="navSettings">Settings</h3>
                 <div class="flex items-center justify-between">
@@ -74,14 +68,12 @@
             <div class="space-y-2">
                 <h3 class="font-bold text-lg text-white" data-lang-key="historyTitle">Search History</h3>
                 <div id="history-list" class="space-y-1 max-h-32 overflow-y-auto text-sm">
-                    <!-- History items will be injected here -->
                 </div>
             </div>
         </div>
     </div>
 
 
-    <!-- Main Content -->
     <div id="main-content">
         <header class="bg-black/30 backdrop-blur-sm fixed top-0 left-0 right-0 z-20">
             <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -95,7 +87,6 @@
             </nav>
         </header>
 
-        <!-- Landing Page View -->
         <div id="landing-page">
             <section class="hero-bg text-white pt-48 sm:pt-32 pb-20 text-center">
                 <div id="stars1"></div>
@@ -166,7 +157,6 @@
                 </div>
             </section>
 
-             <!-- Mission Section -->
             <section id="mission" class="py-20 bg-transparent">
                 <div class="container mx-auto px-4">
                     <div class="glass-panel rounded-lg p-8 md:p-12 animate-on-scroll">
@@ -180,7 +170,6 @@
                 </div>
             </section>
 
-            <!-- AQI Guide Section -->
             <section id="aqi-guide" class="py-20 bg-transparent">
                 <div class="container mx-auto px-4">
                     <div class="text-center mb-16 animate-on-scroll">
@@ -188,12 +177,10 @@
                         <p class="text-gray-400 mt-4 max-w-3xl mx-auto" data-lang-key="aqiGuideDesc">The AQI is your guide to understanding how clean or polluted the air is. Here's a quick breakdown of the levels:</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-                        <!-- AQI Levels will be injected here by JS -->
                     </div>
                 </div>
             </section>
 
-            <!-- Team Section -->
             <section id="team" class="py-20 bg-transparent">
                  <div class="container mx-auto px-4">
                     <div class="text-center mb-16 animate-on-scroll">
@@ -201,34 +188,28 @@
                         <p class="text-lg text-gray-400 mt-2 italic" data-lang-key="teamSlogan">Together, we build solutions for a better tomorrow.</p>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                        <!-- Team Member Cards will be injected here -->
                     </div>
                 </div>
             </section>
 
         </div>
         
-        <!-- Page Content Views (Initially empty container for other pages if needed) -->
         <div id="page-content" class="hidden pt-20">
         </div>
 
-        <!-- Map & App Section (Initially Hidden) -->
         <div id="map-view" class="hidden">
              <div id="map-container" class="relative">
                 <div id="map"></div>
-                <!-- Data Panel and other map overlays will be added here by JavaScript -->
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-black/30 py-6 text-center text-gray-400 border-t border-gray-800">
         <div class="container mx-auto px-4">
             <p data-lang-key="footerText">&copy; 2024 All rights reserved for Digital Minds team</p>
         </div>
     </footer>
 
-    <!-- AI Assistant Button and Modal -->
     <button type="button" id="ai-assistant-btn" class="button fixed bottom-6 right-6 z-[1500]">
         <span class="fold"></span>
         <div class="points_wrapper">
@@ -267,7 +248,6 @@
             <button id="close-ai-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
             <h3 class="text-2xl font-bold mb-4 text-center text-white" data-lang-key="aiAssistantTitle">AI Assistant</h3>
             <div id="ai-chat-window" class="flex-grow bg-gray-900/50 rounded-lg p-4 overflow-y-auto mb-4">
-                <!-- Chat messages will be injected here -->
             </div>
             <div id="ai-loading-indicator" class="hidden flex justify-center items-center mb-2 h-12">
                 <div class="loading" style="height: 50px;">
@@ -312,12 +292,9 @@
         </div>
     </div>
 
-    <!-- Main App Script -->
     <script type="module">
-        // --- Gemini API Key ---
         const GEMINI_API_KEY = "AIzaSyDgd0sCe4CXWO6e7rqJufMwdbcTCFHNsco";
 
-        // --- TEAM DATA ---
         const teamMembers = [
             { name: "Ahmed Salem Khalifa", role: "Team Lead & LLM Specialist", desc: "Responsible for the overall project vision, managing the development timeline, and coordinating the team's tasks. His expertise as an LLM Specialist will guide any future integrations of AI-powered features.", img: "https://ibb.co/1YBgwyqH" },
             { name: "Roqaya Mohamed Ahmed", role: "Business Strategist & Frontend Developer", desc: "Responsible for aligning the project with market needs and developing the business strategy. She will also contribute to frontend development, focusing on a user-friendly interface.", img: "https://i.ibb.co/VZpYzy3/Whats-App-Image-2025-09-26-at-15-55-43-eed85144.jpg" },
@@ -327,7 +304,6 @@
         ];
 
 
-        // --- TRANSLATIONS OBJECT ---
         const translations = {
             en: {
                 appName: "Air Quality Monitor",
@@ -549,7 +525,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- UI ELEMENTS ---
             const landingPage = document.getElementById('landing-page');
             const pageContent = document.getElementById('page-content');
             const mapView = document.getElementById('map-view');
@@ -561,7 +536,6 @@
             const themeSwitch = document.getElementById('theme-switch-input');
             const talkbackToggle = document.getElementById('talkback-toggle');
 
-            // AI Assistant UI Elements
             const aiAssistantBtn = document.getElementById('ai-assistant-btn');
             const aiModal = document.getElementById('ai-modal');
             const closeAiModalBtn = document.getElementById('close-ai-modal');
@@ -584,7 +558,6 @@
             const landingPageAnchors = ['#mission', '#aqi-guide', '#about-features', '#team'];
             const historyList = document.getElementById('history-list');
 
-            // --- SEARCH HISTORY LOGIC ---
             let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
 
             function renderSearchHistory() {
@@ -622,19 +595,15 @@
             }
 
             function saveSearchToHistory(searchItem) {
-                // Check for duplicates based on coordinates to avoid language-based duplication.
-                // Using toFixed(4) for a reasonable precision check (approx. 11 meters).
                 const existingIndex = searchHistory.findIndex(item =>
                     item.lat.toFixed(4) === searchItem.lat.toFixed(4) &&
                     item.lng.toFixed(4) === searchItem.lng.toFixed(4)
                 );
 
                 if (existingIndex > -1) {
-                    // If the location already exists, remove it from its old position.
                     searchHistory.splice(existingIndex, 1);
                 }
 
-                // Add the new or updated search item to the end of the history.
                 searchHistory.push(searchItem);
 
                 // Keep the history list to a maximum of 10 items.
@@ -646,7 +615,6 @@
                 renderSearchHistory();
             }
 
-            // --- AI CHAT LOGIC ---
             const openAiModal = () => {
                 aiModal.classList.remove('hidden');
                 const currentLang = localStorage.getItem('preferredLanguage') || 'en';
@@ -692,10 +660,8 @@
 
                 const selectedConditions = Array.from(document.querySelectorAll('.health-condition:checked')).map(cb => cb.value);
 
-                // System-level instruction for the AI's persona
                 let systemPrompt = "You are a helpful AI assistant for the 'Air Quality Monitor' web application. Your role is to interpret environmental data and provide clear, actionable advice. Be friendly and encouraging.";
 
-                // Contextual data from the application
                 let contextPrompt = "";
                 if (currentLocationData) {
                     const { aqiData, weatherData } = currentLocationData;
@@ -708,14 +674,12 @@
                     contextPrompt = "The user has not selected a location on the map yet.";
                 }
 
-                // User-specific information
                 let userPrompt = `The user's question is: "${userInput}".`;
                 if (selectedConditions.length > 0) {
                     const conditionsText = selectedConditions.join(', ');
                     userPrompt += ` They have indicated the following health conditions: ${conditionsText}. Please tailor your advice accordingly.`;
                 }
 
-                // Assemble the final prompt
                 const fullPrompt = `${systemPrompt}\n\n${contextPrompt}\n\n${userPrompt}\n\n${langInstructions}`;
 
                 const aiResponse = await askGemini(fullPrompt);
@@ -760,7 +724,6 @@
             });
 
 
-            // --- TEXT-TO-SPEECH VOICE LOADER ---
             function loadVoices() {
                 speechVoices = speechSynthesis.getVoices();
             }
@@ -769,7 +732,6 @@
                 speechSynthesis.onvoiceschanged = loadVoices;
             }
 
-            // --- RENDER DYNAMIC CONTENT ---
             function renderTeam() {
                 const teamContainer = document.querySelector('#team .grid');
                 if(!teamContainer) return;
@@ -818,7 +780,6 @@
                 });
             }
             
-            // --- Create Shooting Stars ---
             const shootingStarsContainer = document.getElementById('shooting-stars-container');
             if (shootingStarsContainer) {
                 const numberOfStars = 15;
@@ -835,7 +796,6 @@
             renderTeam();
             renderAqiGuide();
             
-            // --- THEME/DARK MODE LOGIC ---
             const applyTheme = (theme) => {
                 if (theme === 'light') {
                     document.documentElement.classList.add('light');
@@ -854,18 +814,15 @@
 
             themeSwitch.addEventListener('change', toggleTheme);
 
-            // Set initial theme based on localStorage
             const initialTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(initialTheme);
             
-            // --- SECURITY HELPER ---
             const sanitizeInput = (input) => {
                 const div = document.createElement('div');
                 div.textContent = input;
                 return div.innerHTML;
             };
 
-            // --- LANGUAGE SWITCHER LOGIC ---
             const setLanguage = (lang) => {
                 speechSynthesis.cancel();
                 document.documentElement.lang = lang;
@@ -918,7 +875,6 @@
             setLanguage(preferredLanguage);
             renderSearchHistory();
 
-            // --- Scroll Animations ---
             const scrollElements = document.querySelectorAll('.animate-on-scroll');
             const elementInView = (el, offset = 0) => {
                 const elementTop = el.getBoundingClientRect().top;
@@ -938,7 +894,6 @@
             window.addEventListener('scroll', handleScrollAnimation);
 
 
-            // --- VIEW MANAGEMENT ---
             function showPage(hash) {
                 speechSynthesis.cancel();
                 allViews.forEach(v => v.classList.add('hidden'));
@@ -966,13 +921,12 @@
                 setTimeout(handleScrollAnimation, 100);
             }
             
-             // --- "TALKBACK" TEXT-TO-SPEECH LOGIC ---
             const speakText = (element) => {
                 if (!isTalkbackEnabled || !element || !element.innerText.trim()) {
                     return;
                 }
 
-                speechSynthesis.cancel(); // Stop any previous speech
+                speechSynthesis.cancel(); 
 
                 const textToRead = element.innerText;
                 const utterance = new SpeechSynthesisUtterance(textToRead);
@@ -1043,10 +997,9 @@
             });
             
             window.addEventListener('hashchange', () => showPage(window.location.hash));
-            showPage(window.location.hash); // Initial load
+            showPage(window.location.hash); 
 
 
-             // Sidebar Toggle
             const closeSidebar = () => document.body.classList.remove('sidebar-open');
             menuBtn.addEventListener('click', () => document.body.classList.add('sidebar-open'));
             closeSidebarBtn.addEventListener('click', closeSidebar);
@@ -1055,9 +1008,7 @@
                 link.addEventListener('click', (e) => {
                     const href = link.getAttribute('href');
                     if (!href.startsWith('#') || href === '#') {
-                        // Let default behavior for external links
                     } else {
-                        // For all internal hash links, prevent default and let our logic handle it
                         e.preventDefault();
                         window.location.hash = href;
                     }
@@ -1065,7 +1016,6 @@
                 });
             });
 
-            // --- MAP APPLICATION LOGIC (INITIALIZED ON DEMAND) ---
             function initializeMapApp() {
                 // API KEYS
                 const WAQI_API_KEY = "928a43b09b68edba7abf27fda1fa9a9a754fd8c0";
@@ -1073,7 +1023,6 @@
                 
                 let currentCityData = {}; 
 
-                // Inject map UI elements
                 mapContainer.innerHTML = `
                     <div id="map"></div>
                     <button id="locate-btn" class="absolute bottom-4 left-4 z-[1000] p-3 rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" title="Find my location">
@@ -1108,7 +1057,6 @@
                     </div>
                 `;
 
-                // Map UI element references
                 const dataPanel = document.getElementById('data-panel');
                 const loadingDiv = document.getElementById('loading');
                 const dataContentDiv = document.getElementById('data-content');
@@ -1123,7 +1071,6 @@
                 const windValueEl = document.getElementById('wind-value');
                 const forecastTextEl = document.getElementById('forecast-text');
                 
-                // Map Initialization
                 map = L.map('map').setView([26.8206, 30.8025], 6); 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1143,7 +1090,6 @@
                     saveSearchToHistory({ name: name, lat: center.lat, lng: center.lng });
                 }).addTo(map);
 
-                // --- DATA FETCHING & UI LOGIC ---
                 const fetchAllDataForLocation = async (lat, lng) => {
                     speechSynthesis.cancel();
                     dataPanel.classList.remove('hidden');
@@ -1242,7 +1188,6 @@
                 const updateUIPanel = ({ aqiData, weatherData, lat, lng }) => {
                     const currentLang = localStorage.getItem('preferredLanguage') || 'en';
                     
-                    // Store data for AI context
                     currentLocationData = { aqiData, weatherData };
                     getForecastBtn.classList.remove('hidden');
 
