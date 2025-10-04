@@ -125,17 +125,18 @@
         }
         .shooting-star {
             position: absolute;
-            left: -150px;
+            top: 0;
+            right: -150px;
             width: 150px;
             height: 2px;
-            background: linear-gradient(to right, #fff, transparent);
+            background: linear-gradient(to left, #fff, transparent);
             animation-name: shoot;
             animation-timing-function: linear;
             animation-iteration-count: infinite;
         }
         @keyframes shoot {
             from { transform: translateX(0); }
-            to { transform: translateX(calc(100vw + 300px)); }
+            to { transform: translateX(calc(-100vw - 300px)); }
         }
 
         /* From Uiverse.io by Lakshay-art */
