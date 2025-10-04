@@ -419,6 +419,51 @@
         html.light .text-green-400 { color: #22c55e; }
         html.light .text-indigo-400 { color: #6366f1; }
         html.light .text-indigo-300 { color: #818cf8; }
+
+        /* --- Theme Switch CSS --- */
+        .switch {
+          font-size: 17px;
+          position: relative;
+          display: inline-block;
+          width: 3.5em;
+          height: 2em;
+        }
+        .switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .slider {
+          --background: #28096b;
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: var(--background);
+          transition: .5s;
+          border-radius: 30px;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 1.4em;
+          width: 1.4em;
+          border-radius: 50%;
+          left: 10%;
+          bottom: 15%;
+          box-shadow: inset 8px -4px 0px 0px #fff000;
+          background: var(--background);
+          transition: .5s;
+        }
+        input:checked + .slider {
+          background-color: #522ba7;
+        }
+        input:checked + .slider:before {
+          transform: translateX(100%);
+          box-shadow: inset 15px -4px 0px 15px #fff000;
+        }
     </style>
 </head>
 <body class="text-gray-200">
@@ -448,7 +493,10 @@
                 </div>
                  <div class="flex items-center justify-between">
                     <span class="text-gray-300" data-lang-key="navTheme">Theme</span>
-                    <button id="theme-toggle-sidebar" class="p-2 rounded-lg text-gray-400 hover:bg-gray-700"></button>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-switch-input">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <div class="flex items-center justify-between">
                     <label for="talkback-toggle" class="text-gray-300" data-lang-key="navTalkback">Read on Hover</label>
@@ -901,7 +949,7 @@
             const sidebarOverlay = document.getElementById('sidebar-overlay');
             const menuBtn = document.getElementById('menu-btn');
             const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-            const themeToggleSidebar = document.getElementById('theme-toggle-sidebar');
+            const themeSwitch = document.getElementById('theme-switch-input');
             const talkbackToggle = document.getElementById('talkback-toggle');
 
             // AI Assistant UI Elements
@@ -1119,22 +1167,22 @@
             const applyTheme = (theme) => {
                 if (theme === 'light') {
                     document.documentElement.classList.add('light');
-                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>`; // Moon icon
+                    themeSwitch.checked = true;
                 } else { // 'dark' is default
                     document.documentElement.classList.remove('light');
-                    themeToggleSidebar.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 15a5 5 0 100-10 5 5 0 000 10zM10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm0 14a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-7-8a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm14 0a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zm-2.929-5.071a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707zm-9.142 9.142a1 1 0 011.414 1.414l-.707.707a1 1 0 01-1.414-1.414l.707.707zm9.142 0a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707zm-9.142-9.142a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>`; // Sun icon
+                    themeSwitch.checked = false;
                 }
             };
 
             const toggleTheme = () => {
-                const currentTheme = localStorage.getItem('theme') || 'dark';
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                const newTheme = themeSwitch.checked ? 'light' : 'dark';
                 localStorage.setItem('theme', newTheme);
                 applyTheme(newTheme);
             };
 
-            themeToggleSidebar.addEventListener('click', toggleTheme);
+            themeSwitch.addEventListener('change', toggleTheme);
 
+            // Set initial theme based on localStorage
             const initialTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(initialTheme);
             
