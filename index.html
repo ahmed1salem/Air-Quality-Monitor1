@@ -929,7 +929,11 @@
             // --- AI CHAT LOGIC ---
             const openAiModal = () => {
                 aiModal.classList.remove('hidden');
-                appendMessage("Welcome! Ask me for a weather and air quality forecast, or for personalized health advice based on the data.", "ai");
+                const currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                const welcomeMessage = currentLang === 'ar'
+                    ? "أهلاً بك! يمكنك سؤالي عن توقعات الطقس وجودة الهواء، أو طلب نصائح صحية شخصية بناءً على البيانات المتاحة."
+                    : "Welcome! Ask me for a weather and air quality forecast, or for personalized health advice based on the data.";
+                appendMessage(welcomeMessage, "ai");
             };
 
             const closeAiModal = () => {
@@ -962,22 +966,37 @@
                 aiLoadingIndicator.classList.remove('hidden');
 
                 const currentLang = localStorage.getItem('preferredLanguage') || 'en';
-                const langInstructions = currentLang === 'ar' ? 'Please respond in Arabic.' : 'Please respond in English.';
-                const selectedConditions = Array.from(document.querySelectorAll('.health-condition:checked')).map(cb => cb.value);
-                let fullPrompt = userInput;
+                const langInstructions = currentLang === 'ar'
+                    ? 'The user prefers Arabic. Your entire response must be in Arabic.'
+                    : 'The user prefers English. Your entire response must be in English.';
 
-                if (selectedConditions.length > 0) {
-                    const conditionsText = selectedConditions.join(', ');
-                    let contextSegment = '';
-                    if (currentLocationData) {
-                        const { aqiData, weatherData } = currentLocationData;
-                        contextSegment = ` The current data is: AQI ${aqiData?.aqi || 'N/A'}, Weather is ${weatherData?.weather?.[0]?.description || 'N/A'}.`;
-                    }
-                    fullPrompt = `A user with ${conditionsText} is asking: "${userInput}". Please provide personalized advice, considering their health conditions. ${contextSegment}. ${langInstructions}`;
+                const selectedConditions = Array.from(document.querySelectorAll('.health-condition:checked')).map(cb => cb.value);
+
+                // System-level instruction for the AI's persona
+                let systemPrompt = "You are a helpful AI assistant for the 'Air Quality Monitor' web application. Your role is to interpret environmental data and provide clear, actionable advice. Be friendly and encouraging.";
+
+                // Contextual data from the application
+                let contextPrompt = "";
+                if (currentLocationData) {
+                    const { aqiData, weatherData } = currentLocationData;
+                    const aqi = aqiData?.aqi || 'N/A';
+                    const temp = weatherData?.main?.temp ? `${Math.round(weatherData.main.temp)}°C` : 'N/A';
+                    const weather = weatherData?.weather?.[0]?.description || 'N/A';
+                    const city = weatherData?.name || aqiData?.city?.name || 'the current location';
+                    contextPrompt = `The user is currently viewing data for ${city}. The Air Quality Index (AQI) is ${aqi}. The weather is ${weather} with a temperature of ${temp}.`;
                 } else {
-                    fullPrompt = `${userInput}. ${langInstructions}`;
+                    contextPrompt = "The user has not selected a location on the map yet.";
                 }
 
+                // User-specific information
+                let userPrompt = `The user's question is: "${userInput}".`;
+                if (selectedConditions.length > 0) {
+                    const conditionsText = selectedConditions.join(', ');
+                    userPrompt += ` They have indicated the following health conditions: ${conditionsText}. Please tailor your advice accordingly.`;
+                }
+
+                // Assemble the final prompt
+                const fullPrompt = `${systemPrompt}\n\n${contextPrompt}\n\n${userPrompt}\n\n${langInstructions}`;
 
                 const aiResponse = await askGemini(fullPrompt);
 
